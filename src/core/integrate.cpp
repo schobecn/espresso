@@ -63,6 +63,8 @@
 #include "immersed_boundary/ibm_main.hpp"
 #include "immersed_boundary/ibm_volume_conservation.hpp"
 #include "minimize_energy.hpp"
+#include "bond_breakage.hpp"
+
 
 #ifdef VALGRIND_INSTRUMENTATION
 #include <callgrind.h>
@@ -284,8 +286,13 @@ void integrate_vv(int n_steps, int reuse_forces)
     if (lattice_switch & LATTICE_LB_GPU && this_node == 0)
       runtimeWarning ("Recalculating forces, so the LB coupling forces are not included in the particle force the first time step. This only matters if it happens frequently during sampling.\n");
 #endif
+    
+    bond_breakage().queue.clear();
 
+    
     force_calc();
+
+    bond_breakage().process_queue();
 
     if(integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       rescale_forces();
