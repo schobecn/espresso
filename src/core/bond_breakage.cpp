@@ -1,9 +1,9 @@
-#include "boost/signals2.hpp"
 #include <vector>
 #include <tuple>
 #include "interaction_data.hpp"
 #include "particle_data.hpp"
 #include "bond_breakage.hpp" 
+#include <functional>
 
 // Active instance 
 std::unique_ptr<BondBreakage> bb;
@@ -20,7 +20,9 @@ BondBreakage& bond_breakage()
 
 void BondBreakage::process_queue() {
   for (auto p : queue) {
-    handlers(std::get<0>(p),std::get<1>(p),std::get<2>(p));
+    for (auto h : handlers) {
+      h(std::get<0>(p),std::get<1>(p),std::get<2>(p));
+    }
   }
   queue.clear();
 }
@@ -45,10 +47,58 @@ void break_simple_pair_bond(int t, int p1, int p2)
   }
 }
 
-
-const std::map<std::string, std::function<void(int,int,int)>> available_bond_breakage_handlers() 
+void print_queue_entry(int t, int p1, int p2)
 {
-  return std::map<std::string, std::function<void(int,int,int)>>({ 
-    { "break_simple_pair_bond",&break_simple_pair_bond}
-  });
+  printf("Bond breakage: Type=%d, id1=%d, id2=%d\n",t,p1,p2);
 }
+
+const std::map<std::string, BreakageHandler> available_bond_breakage_handlers() 
+{
+  typedef std::map<std::string, BreakageHandler> result_type;
+  result_type res;
+  typedef result_type::value_type val;
+  res.insert(val(std::string("break_simple_pair_bond"),break_simple_pair_bond));
+  res.insert(val(std::string("print_queue_entry"),print_queue_entry));
+  return res;
+}
+
+bool BondBreakage::add_handler_by_name(const std::string& n) {
+  // Find the handler with the given name
+  
+  if (available_bond_breakage_handlers().count(n)==0)
+    return false;
+
+  // Else, add the handler to the list of active handlers
+  handlers.push_back(available_bond_breakage_handlers().at(n));
+  return true;
+}
+
+const std::vector<std::string> BondBreakage::active_handlers_by_name() {
+  std::vector<std::string> res;
+
+  // Iterate over active handlers
+  for (auto h : handlers) {
+    bool found=false;
+    for (auto i: available_bond_breakage_handlers()) {
+      printf("h:%p; i:%s,%p\n",h,i.first.c_str(),i.second);
+      if (i.second ==h) {
+        found=true;
+        res.push_back(i.first);
+        break;
+      }
+    }
+    if (!found) 
+      res.push_back(std::string("Unknown"));
+  }
+  return res;
+}
+
+const std::vector<std::string> available_bond_breakage_handlers_by_name() {
+  std::vector<std::string> res;
+  for (auto h : available_bond_breakage_handlers()) {
+      res.push_back(std::string(h.first));
+  }
+  return res;
+
+}
+
