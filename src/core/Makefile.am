@@ -30,6 +30,7 @@ lib_LTLIBRARIES = libEspresso.la
 # config-features.cpp must be at the beginning so that it is compiled first
 libEspresso_la_SOURCES = \
 	config-features.cpp \
+  bond_breakage.cpp bond_breakage.hpp \
 	cells.cpp cells.hpp \
 	collision.cpp collision.hpp \
 	communication.cpp communication.hpp \
