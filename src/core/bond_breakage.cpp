@@ -80,7 +80,6 @@ const std::vector<std::string> BondBreakage::active_handlers_by_name() {
   for (auto h : handlers) {
     bool found=false;
     for (auto i: available_bond_breakage_handlers()) {
-      printf("h:%p; i:%s,%p\n",h,i.first.c_str(),i.second);
       if (i.second ==h) {
         found=true;
         res.push_back(i.first);

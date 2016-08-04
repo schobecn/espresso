@@ -1,9 +1,12 @@
+#ifndef BOND_BREAKAGE_H
+#define BOND_BREAKAGE_H
+
 #include "boost/signals2.hpp"
 #include <vector>
 #include <tuple>
 #include <string>
 #include "boost/bimap.hpp"
-
+#include "interaction_data.hpp"
 // Handlers which actually remove the bond. Args: bond type, particle ids
 //typedef std::function<void(int,int,int)> BreakageHandler;
 typedef void (*BreakageHandler)(int,int,int);
@@ -13,6 +16,11 @@ class BondBreakage {
   public:
     // Queue bonds to break
     std::vector<std::tuple<int,int,int>> queue;
+    inline void queue_breakage(int t,int p1,int p2) {
+      queue.push_back(std::tuple<int,int,int>(t,p1,p2));
+    }
+
+
     // Vector containing the active bond breakage handlers 
     // Note: Not using boost:signals2, because it doesn't seem to iterate 
     // active slots for other purposes than calling. 
@@ -36,3 +44,5 @@ void break_simple_pair_bond(int t, int p1, int p2);
 void initialize_bond_breakage();
 const std::map<std::string, BreakageHandler> available_bond_breakage_handlers();
 const std::vector<std::string> available_bond_breakage_handlers_by_name(); 
+
+#endif
