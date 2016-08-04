@@ -728,6 +728,8 @@ typedef struct {
       double invstepsize;
       double *f;
       double *e;
+      bool breakable;
+      int bond_id;
 } Tabulated_bond_parameters;
 
 /** Parameters for n-body overlapped potential (n=2,3,4). */

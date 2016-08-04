@@ -695,14 +695,14 @@ IF TABULATED == 1:
             return "TABULATED"
 
         def valid_keys(self):
-            return "type", "filename", "npoints", "minval", "maxval", "invstepsize"
+            return "type", "filename", "npoints", "minval", "maxval", "invstepsize","breakable"
 
         def required_keys(self):
             return "type", "filename", "npoints", "minval", "maxval", "invstepsize"
 
         def set_default_params(self):
             self._params = {"type": 1, "filename": "", "npoints": 0, "minval": 0, "maxval": 1,
-                            "invstepsize": 1}
+                            "invstepsize": 1,"breakable":0}
 
         def _get_params_from_es_core(self):
             return \
@@ -711,11 +711,12 @@ IF TABULATED == 1:
                  "npoints": bonded_ia_params[self._bond_id].p.tab.npoints,
                  "minval": bonded_ia_params[self._bond_id].p.tab.minval,
                  "maxval": bonded_ia_params[self._bond_id].p.tab.maxval,
-                 "invstepsize": bonded_ia_params[self._bond_id].p.tab.invstepsize}
+                 "invstepsize": bonded_ia_params[self._bond_id].p.tab.invstepsize,
+                 "breakable": bonded_ia_params[self._bond_id].p.tab.breakable}
 
         def _set_params_in_es_core(self):
             tabulated_bonded_set_params(
-                self._bond_id, self._params["type"], self._params["filename"])
+                self._bond_id, self._params["type"], self._params["filename"],self._params["breakable"])
 
 
 IF TABULATED != 1:

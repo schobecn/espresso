@@ -109,7 +109,7 @@ int tabulated_set_params(int part_type_a, int part_type_b, char* filename)
   return 0;
 }
 
-int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, char * filename)
+int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, char * filename, bool breakable)
 {
   int i, token = 0, size;
   double dummr;
@@ -137,6 +137,10 @@ int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_ty
   /* set types */
   bonded_ia_params[bond_type].type       = BONDED_IA_TABULATED;
   bonded_ia_params[bond_type].p.tab.type = tab_type;
+
+  bonded_ia_params[bond_type].p.tab.breakable = breakable;
+  bonded_ia_params[bond_type].p.tab.bond_id = bond_type;
+
 
   /* set number of interaction partners */
   if(tab_type == TAB_BOND_LENGTH)   bonded_ia_params[bond_type].num = 1;

@@ -48,7 +48,16 @@ int tclcommand_inter_parse_tabulated_bonded(Tcl_Interp *interp, int bond_type, i
     return (TCL_ERROR);
   }
 
-  switch (tabulated_bonded_set_params(bond_type, tab_type, argv[2])) {
+  // Bond breakage
+  int breakable =0; // Default is not to use bond_breakage mechanism
+                    // and throw runtime error on breakage
+  if (argc==4) {
+    if (!ARG_IS_I(3,breakable)) {
+      Tcl_AppendResult(interp, "The breakable switch needs to be an int", (char *) NULL);
+      return TCL_ERROR;
+    }
+  } 
+  switch (tabulated_bonded_set_params(bond_type, tab_type, argv[2],breakable)) {
   case 1:
     Tcl_AppendResult(interp, "illegal bond type", (char *)NULL);
     return TCL_ERROR;
@@ -136,21 +145,29 @@ return 2;
 int tclprint_to_result_tabulated_bondedIA(Tcl_Interp *interp,
 					  Bonded_ia_parameters *params)
 {
+
+
   switch (params->p.tab.type) {
   case TAB_BOND_LENGTH:
-    Tcl_AppendResult(interp, "tabulated bond \"",params->p.tab.filename,"\"",(char *) NULL);
-    return TCL_OK;
+    Tcl_AppendResult(interp, "tabulated bond \"",params->p.tab.filename,"\" ",(char *) NULL);
+    break;
   case TAB_BOND_ANGLE:
-    Tcl_AppendResult(interp, "tabulated angle \"",params->p.tab.filename,"\"",(char *) NULL);
-    return TCL_OK;
+    Tcl_AppendResult(interp, "tabulated angle \"",params->p.tab.filename,"\" ",(char *) NULL);
+    break;
   case TAB_BOND_DIHEDRAL:
-    Tcl_AppendResult(interp, "tabulated dihedral \"",params->p.tab.filename,"\"",(char *) NULL);
-    return TCL_OK;
+    Tcl_AppendResult(interp, "tabulated dihedral \"",params->p.tab.filename,"\" ",(char *) NULL);
+    break;
 
   default:
     Tcl_AppendResult(interp, "unknown type of tabulated bonded interaction encountered",(char *) NULL);
     return TCL_ERROR;
   }
+  if (params->p.tab.breakable)
+    Tcl_AppendResult(interp, "1",(char *) NULL);
+  else
+    Tcl_AppendResult(interp, "0",(char *) NULL);
+
+  return TCL_OK;
 }
 
 #endif

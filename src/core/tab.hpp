@@ -33,6 +33,7 @@
 #include "particle_data.hpp"
 #include "mol_cut.hpp"
 #include "dihedral.hpp"
+#include "bond_breakage.hpp" 
 
 /* should be changed to file containing force caps */
 #include "forcecap.hpp"
@@ -67,6 +68,9 @@ int tabulated_set_params(int part_type_a, int part_type_b, char* filename);
     @param bond_type bond type for which the interaction is defined
     @param tab_type table type, TAB_BOND_LENGTH, TAB_BOND_ANGLE, TAB_BOND_DIHEDRAL
     @param filename from which file to fetch the data
+    @param breakable if true, the bond will break via the bond_breakage
+           breakage mechanism, if the distance is larger than the largest
+           in the table
 
     @return <ul>
     <li> 0 on success
@@ -78,7 +82,7 @@ int tabulated_set_params(int part_type_a, int part_type_b, char* filename);
     <li> 6 parameter out of bounds
     </ul>
 */
-int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, char * filename);
+int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, char * filename, bool breakable);
 
 /** Add a non-bonded pair force by linear interpolation from a table.
     Needs feature TABULATED compiled in (see \ref config.hpp). */
@@ -218,8 +222,18 @@ inline int calc_tab_bond_force(Particle *p1, Particle *p2, Bonded_ia_parameters 
   double fac, dist = sqrt(sqrlen(dx));
 
   if(dist > iaparams->p.tab.maxval)
-    return 1;
-
+  {
+   if (iaparams->p.tab.breakable) {
+     // Queue for graceful bond breakage
+     bond_breakage().queue_breakage(iaparams->p.tab.bond_id, p1->p.identity,p2->p.identity);
+   }
+   else
+   {
+     // Report broken bond, will cause runtime error
+     return 1;
+   }
+  }
+  
   fac = bonded_tab_force_lookup(dist, iaparams);
   
   for(i=0;i<3;i++)
