@@ -58,12 +58,12 @@ cdef class System:
     minimize_energy = MinimizeEnergy()
     polymer = Polymer()
     actors = None
-    analysis =None
+    analysis = None
     galilei = GalileiTransform()
 
     def __init__(self):
         self.actors = Actors(_system=self)
-        self.analysis=Analysis(self)
+        self.analysis = Analysis(self)
 
 #        self.part = particle_data.particleList()
 #        self.non_bonded_inter = interactions.NonBondedInteractions()
@@ -427,29 +427,26 @@ cdef class System:
         else:
             raise ValueError(
                 'Usage: changeVolume { <V_new> | <L_new> { "x" | "y" | "z" | "xyz" } }')
-    
-    def volume(self):
-       """Return box volume"""
-       return self.box_l[0]*self.box_l[1]*self.box_l[2]
 
-    def distance(self,p1,p2):
-       """Return the distance between the particles, respecting periodic boundaries"""
-       cdef double[3] res,a,b
-       a=p1.pos
-       b=p2.pos
-       get_mi_vector(res,a,b)
-       return np.sqrt(res[0]**2+res[1]**2+res[2]**2)
-    
-    def tune_skin(self,min=None,max=None,tol=None,int_steps=None):
+    def volume(self):
+        """Return box volume"""
+        return self.box_l[0] * self.box_l[1] * self.box_l[2]
+
+    def distance(self, p1, p2):
+        """Return the distance between the particles, respecting periodic boundaries"""
+        cdef double[3] res, a, b
+        a = p1.pos
+        b = p2.pos
+        get_mi_vector(res, a, b)
+        return np.sqrt(res[0]**2 + res[1]**2 + res[2]**2)
+
+    def tune_skin(self, min=None, max=None, tol=None, int_steps=None):
         """Tunes the skin by running measuring the time for int_steps
            integration steps and bisecting in the interval min..max upt ot an
            interval of tol."""
-        
-        
+
         tuning.tune_skin(min, max, tol, int_steps)
         return self.skin
-
-
 
 
 # lbfluid=lb.DeviceList()
