@@ -1,4 +1,5 @@
 set(py_tests  bondedInteractions.py
+              bond_breakage.py
               cellsystem.py
               coulomb_cloud_wall.py
               electrostaticInteractions.py
