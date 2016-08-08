@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 include "myconfig.pxi"
+import bond_breakage as _bond_breakage
 # Non-bonded interactions
 
 cdef class NonBondedInteraction(object):
@@ -733,7 +734,7 @@ IF TABULATED == 1:
             return "type", "filename", "npoints", "minval", "maxval", "invstepsize","breakable"
 
         def required_keys(self):
-            return "type", "filename", "npoints", "minval", "maxval", "invstepsize"
+            return "type", "filename" 
 
         def set_default_params(self):
             self._params = {"type": 1, "filename": "", "npoints": 0, "minval": 0, "maxval": 1,
@@ -742,7 +743,7 @@ IF TABULATED == 1:
         def _get_params_from_es_core(self):
             return \
                 {"type": bonded_ia_params[self._bond_id].p.tab.type,
-                 "filename": bonded_ia_params[self.bond_id].p.tab.filename,
+                 "filename": bonded_ia_params[self._bond_id].p.tab.filename,
                  "npoints": bonded_ia_params[self._bond_id].p.tab.npoints,
                  "minval": bonded_ia_params[self._bond_id].p.tab.minval,
                  "maxval": bonded_ia_params[self._bond_id].p.tab.maxval,
@@ -750,10 +751,20 @@ IF TABULATED == 1:
                  "breakable": bonded_ia_params[self._bond_id].p.tab.breakable}
 
         def _set_params_in_es_core(self):
-            tabulated_bonded_set_params(
-                self._bond_id, self._params["type"], self._params["filename"],self._params["breakable"])
-
-
+            res =tabulated_bonded_set_params(
+                  self._bond_id, self._params["type"], self._params["filename"],self._params["breakable"])
+            msg=""
+            if res==1: msg="unknon bond type"
+            if res==3: msg="cannot open file"
+            if res==4: msg="file too short"
+            if msg==5: msg="file broken"
+            if msg==6: msg="parameter out of bound"
+            if res: 
+                raise Exception("Could not setup tabulated bond. "+msg)      
+            # Retrieve some params, Es calculates.
+            self._params=self._get_params_from_es_core()
+  
+  
 IF TABULATED != 1:
     class Tabulated(BondedInteraction):
 
@@ -1076,6 +1087,7 @@ class BondedInteractions:
     NonBondedInteractions[i], where i is the bond id. Will return an instance o
     BondedInteractionHandle"""
 
+    
     def __getitem__(self, key):
         if not isinstance(key, int):
             raise ValueError(
@@ -1126,3 +1138,7 @@ class BondedInteractions:
     def add(self, bonded_ia):
         """Add a bonded ia to the simulation>"""
         self[n_bonded_ia] = bonded_ia
+    
+    
+    # Lets the suer interact with the bond_breakage mechanism
+    bond_breakage = _bond_breakage.BondBreakage() 
