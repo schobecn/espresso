@@ -1135,7 +1135,10 @@ typedef struct {
   double omega;
   double Prefactor;
 } SinusoidalField;
-typedef union {
+
+typedef struct {
+ConstraintApplied type;
+union {
     Constraint_wall wal;
     Constraint_sphere sph;
     Constraint_cylinder cyl;
