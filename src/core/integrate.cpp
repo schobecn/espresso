@@ -466,7 +466,12 @@ void integrate_vv(int n_steps, int reuse_forces) {
     transfer_momentum_gpu = 1;
 #endif
 
+    bond_breakage().queue.clear();
+
+    
     force_calc();
+
+    bond_breakage().process_queue();
 
 // IMMERSED_BOUNDARY
 #ifdef IMMERSED_BOUNDARY
