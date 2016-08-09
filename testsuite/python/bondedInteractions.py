@@ -100,7 +100,7 @@ class ParticleProperties(ut.TestCase):
     test_dihedral = generateTestForBondParams(
         0, Dihedral, {"mult": 3.0, "bend": 5.2, "phase": 3.})
     
-    if "bond_angle" in espressomd.features():
+    if "BOND_ANGLE" in espressomd.features():
         test_angle_harm = generateTestForBondParams(
             0, Angle_Harmonic, {"bend": 5.2, "phi0": 3.2})
         test_angle_cos = generateTestForBondParams(
