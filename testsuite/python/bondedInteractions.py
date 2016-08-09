@@ -109,6 +109,11 @@ class ParticleProperties(ut.TestCase):
             0, Angle_Cossquare, {"bend": 5.2, "phi0": 0.})
     test_subt_lj = generateTestForBondParams(0, Subt_Lj, {"k": 5.2, "r": 3.2})
 
+    if "TABULATED" in espressomd.features():
+      test_tabulated = generateTestForBondParams(0, Tabulated, {"type": "distance", "filename":"lj1.tab","breakable":1})
+
+
+
 if __name__ == "__main__":
     print("Features: ", code_info.features())
     ut.main()
