@@ -47,7 +47,7 @@ class BondBreakage(ut.TestCase):
       self.S.bonded_inter.bond_breakage.add_handler("print_queue_entry")
       self.S.bonded_inter.bond_breakage.add_handler("break_simple_pair_bond")
 
-      tab=Tabulated(type=1,filename="lj1.tab",breakable=True)
+      tab=Tabulated(type="distance",filename="lj1.tab",breakable=True)
       self.S.bonded_inter.add(tab)
       self.S.part.add(pos=(0,0,0),id=0)
       self.S.part.add(pos=(1,0,0),id=1,bonds=((tab,0),))
