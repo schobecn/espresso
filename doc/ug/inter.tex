@@ -1034,12 +1034,24 @@ In the python implementation the constrained bond distance is named r, the posit
 
 \begin{essyntax}
     \variant{1} inter \var{bondid}
-    tabulated bond \var{filename}
+    tabulated bond \var{filename} \opt{\var{breakable}}
     \variant{2} inter \var{bondid}
     tabulated angle \var{filename}
     \variant{3} inter \var{bondid}
     tabulated dihedral \var{filename}
 \end{essyntax}
+\begin{pysyntax}
+  \object{
+    espressomd.interactions
+  }{
+    Tabulated 
+  }{
+  }{
+   (type=\arg{"distance" or "angle" or "dihedral"} ,
+    filename = \arg{str},
+    breakable = \arg{int})
+  }
+\end{pysyntax}
 
 This creates a bond type with identificator \var{bondid} with a
 two-body bond length (variant \variant{1}), three-body angle (variant
@@ -1070,6 +1082,11 @@ The potential is calculated as follows:
   all angles between 0 and $2\pi$. \em{This potential is not tested yet! Use on
     own risk, and please report your findings and eventually necessary fixes.}
 \end{itemize}
+
+The \texttt{breakable} parameter controls the behavior for a distance based interaction, when the particle distance is larger than the maximum value provided in the table.
+If \var{breakable} is 0 (default), a runtime error will be thrown. If it is non-zero, the pair and bond type will be queued for the \texttt{bond_breakage} mechanism. 
+See section \ref{bondbreakage} for details.
+
 
 \subsection{Virtual bonds}
 \begin{pysyntax}
