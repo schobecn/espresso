@@ -652,7 +652,7 @@ just a stripped down version of the domain decomposition cellsystem.
   \variant{2} cuda setdevice \var{id}
   \variant{3} cuda getdevice
 \end{essyntax}
-
+/
 This command can be used to choose the GPU for all subsequent
 GPU-computations. Note that due to driver limitations, the GPU cannot
 be changed anymore after the first GPU-using command has been issued,
@@ -778,6 +778,46 @@ The following limitations currently apply for the collision detection:
 \item The ``bind at point of collision'' approach cannot handle
   collisions between virtual sites
 \end{itemize}
+
+\section{Dynamic bond breakage}
+\label{bondbreakage}
+
+This feature allows for the removal of bonds during the simulation. It can, for instance, be used for reversible agglomeration in conjunction with the collision  detection feature described above.
+To use this capability, two components are needed: a bonded potential that supports bond breakage and has a suitable criterion, and one or several handlers performing the actual decoupling.
+At this point, the tabulated bonded potential can be switch to break, once the distance is larger than the maximum provided by the underlying table. See the potential's documentation for details.
+Two handlers are implemented:
+\begin{itemize}
+\item \texttt{break_simple_pair_bond} removes a pair-bond between the particles
+\item \texttt{print_queue_entry} prints the ids and bond type of the broken bonds for debugging purposes
+\end{itemize}
+
+The list of active handlers are modified as follows
+\begin{essyntax}
+\variant{1} bond\_breakage add \var{name} \var{name} ...
+\variant{2} bond\_breakage list
+\variant{3} bond\_breakage clear
+\end{essyntax}
+
+
+\begin{pysyntax}
+  \object{
+    system.non_bonded_inter.bond_breakage
+  }{
+    add_handler
+  }{ (\var{name})
+  }
+  \object{
+    system.non_bonded_inter.bond_breakage
+  }{
+    active_handlers
+  } {()}
+  \object{
+    system.non_bonded_inter.bond_breakage
+  }{
+    clear
+  } {()}
+
+\end{pysyntax}
 
 \section{Catalytic Reactions}
 \label{sec:Reactions}
