@@ -785,9 +785,10 @@ The following limitations currently apply for the collision detection:
 This feature allows for the removal of bonds during the simulation. It can, for instance, be used for reversible agglomeration in conjunction with the collision  detection feature described above.
 To use this capability, two components are needed: a bonded potential that supports bond breakage and has a suitable criterion, and one or several handlers performing the actual decoupling.
 At this point, the tabulated bonded potential can be switch to break, once the distance is larger than the maximum provided by the underlying table. See the potential's documentation for details.
-Two handlers are implemented:
+Three handlers are implemented:
 \begin{itemize}
 \item \texttt{break_simple_pair_bond} removes a pair-bond between the particles
+\item \texttt{break_bind_at_point_of_collision} breaks a binding as it is created by the \texttt{bind_at_point_of_collision} mechanism in the collision detection / dynamic bonding feature. The breakage needs to be queued for the bond type which is used for the bond between the virtual sites. In addition to this bond, the breakage handler also removes all pair bonds between the two non-virtual particles to which the two virtual sites are related.
 \item \texttt{print_queue_entry} prints the ids and bond type of the broken bonds for debugging purposes
 \end{itemize}
 
