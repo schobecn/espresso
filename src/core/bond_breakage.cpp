@@ -47,10 +47,27 @@ void break_simple_pair_bond(int t, int p1, int p2)
   }
 }
 
+void break_bind_at_point_of_collision(int t, int p1, int p2) {
+if ((local_particles[p1]->p.isVirtual==0) || (local_particles[p2]->p.isVirtual==0)) {
+  runtimeError("The bond breakage handler break_bind_at_point_of_collision nddes to act on the two virtual sites created by the collision.");
+  return;
+}
+// Break the bond between the two virtual sites
+break_simple_pair_bond(t,p1,p2);
+// Break ALL bonds between the non-virutal particles on which these vs are based
+delete_all_pair_bonds_local(
+   local_particles[local_particles[p1]->p.vs_relative_to_particle_id],
+   local_particles[local_particles[p2]->p.vs_relative_to_particle_id]);
+}
+
 void print_queue_entry(int t, int p1, int p2)
 {
   printf("Bond breakage: Type=%d, id1=%d, id2=%d\n",t,p1,p2);
 }
+
+
+
+ 
 
 const std::map<std::string, BreakageHandler> available_bond_breakage_handlers() 
 {
@@ -58,6 +75,7 @@ const std::map<std::string, BreakageHandler> available_bond_breakage_handlers()
   result_type res;
   typedef result_type::value_type val;
   res.insert(val(std::string("break_simple_pair_bond"),break_simple_pair_bond));
+  res.insert(val(std::string("break_bind_at_point_of_collision"),break_bind_at_point_of_collision));
   res.insert(val(std::string("print_queue_entry"),print_queue_entry));
   return res;
 }
