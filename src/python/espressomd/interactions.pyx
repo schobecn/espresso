@@ -597,6 +597,7 @@ class HarmonicBond(BondedInteraction):
     def _set_params_in_es_core(self):
         harmonic_set_params(
             self._bond_id, self._params["k"], self._params["r_0"], self._params["r_cut"])
+        self._params=self._get_params_from_es_core()
 
 
 IF ROTATION:
