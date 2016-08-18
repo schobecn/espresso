@@ -21,7 +21,7 @@
 import unittest as ut
 import espressomd
 import numpy as np
-from espressomd.interactions import Tabulated 
+from espressomd.interactions import Tabulated,HarmonicBond
 from espressomd.integrate import integrate
 
 
@@ -49,6 +49,8 @@ class BondBreakage(ut.TestCase):
 
       tab=Tabulated(type="distance",filename="lj1.tab",breakable=True)
       self.S.bonded_inter.add(tab)
+      harm=HarmonicBond(k=1,r_0=1)
+      self.S.bonded_inter.add(harm)
       self.S.part.add(pos=(0,0,0),id=0)
       self.S.part.add(pos=(1,0,0),id=1,bonds=((tab,0),))
       integrate(0)
@@ -67,17 +69,42 @@ class BondBreakage(ut.TestCase):
       tab.params=p
       self.assertRaises(Exception,integrate(1),"Extending tabulated bond with breakge turned off shoudl raise runtime error")
 
-
-
-
-
-
+      # Test breaking of bind_at_point_of_collision
+      self.S.bonded_inter.bond_breakage.clear_handlers()
+      self.S.bonded_inter.bond_breakage.add_handler("break_bind_at_point_of_collision")
+      # SEtup
+      # Non-virtual particles
+      self.S.part[0].bonds=()
+      self.S.part[0].pos=0,0,0
+      self.S.part[1].bonds=((harm,0),(harm,0))
       
+      # Virtual sites
+      self.S.part.add(id=2,pos=self.S.part[0].pos,virtual=1)
+      self.S.part.add(id=3,pos=self.S.part[1].pos,virtual=1,bonds=((tab,2),))
+      self.S.part[2].vs_auto_relate_to(0)
+      self.S.part[3].vs_auto_relate_to(1)
+
+      # Extr particles
+      self.S.part.add(id=4,pos=(0,0,0))
+      self.S.part[0].bonds=((harm,4),)
+      p=tab._params
+      p.update(breakable=True)
+      tab.params=p
+      integrate(0)
+      # Check bonds
+      print self.S.part[0].bonds
+      expected=((harm,4),)
+      print expected
+      self.assertTrue(self.S.part[0].bonds==expected)
+      self.assertTrue(self.S.part[1].bonds==())
+      self.assertTrue(self.S.part[2].bonds==())
+      self.assertTrue(self.S.part[3].bonds==())
+      self.assertTrue(self.S.part[4].bonds==())
 
 
 
 
-      
+
 if __name__ == "__main__":
     print("Features: ", espressomd.features())
     ut.main()
