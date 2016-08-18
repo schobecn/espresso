@@ -1491,6 +1491,52 @@ int try_delete_bond(Particle *part, int *bond)
   return ES_ERROR;
 }
 
+void delete_all_pair_bonds_local(Particle* _p1, Particle* _p2)
+{
+int id1,id2;
+for (int i=0;i<2;i++) {
+  // Delete bonds on both particles. In one pass, we swap the ids
+  Particle* p1,*p2;
+  int id1,id2;
+  if (i) {
+    id1=_p1->p.identity; 
+    p1=_p1;
+    
+    id2=_p2->p.identity; 
+    p2=_p2;
+  } 
+  else
+  {
+    id1=_p2->p.identity;
+    p1=_p2;
+    
+    id2=_p1->p.identity; 
+    p2=_p1;
+  }
+  // Walk through bond list
+  int j=0;
+  while (j<p1->bl.n) 
+  {
+    IntList* bl=&(p1->bl);
+    int bond_type=bl->e[j];
+    // Only pair bonds, and only those with the right partner
+    if ((bonded_ia_params[bond_type].num==1) && (bl->e[j+1]==id2)) {
+      // Delete the bond. Bond consits of two ints: type partner
+	    memmove(bl->e + j, bl->e + j + 2, sizeof(int)*(bl->n - j));
+      bl->n-=2;
+      realloc_intlist(bl,bl->n);
+      // Since we deleted a bond, we stay at the same place in the list to look
+      // at the next one which was moved ahead
+    }
+    else
+    { 
+      // Next pos in the list: 1 for type + number of partners
+      j+=1+bonded_ia_params[bond_type].num;
+    }
+  }
+}
+}
+
 void remove_all_bonds_to(int identity)
 {
   Cell *cell;

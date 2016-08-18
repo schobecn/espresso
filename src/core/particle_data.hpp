@@ -898,6 +898,9 @@ inline int do_nonbonded(Particle *p1, Particle *p2) {
 /** Remove bond from particle if possible */
 int try_delete_bond(Particle *part, int *bond);
 
+/** Remove all bonds with exactly one parnter between the given particles */
+void delete_all_pair_bonds_local(Particle* _p1, Particle* _p2);
+
 /** Remove exclusion from particle if possible */
 void try_delete_exclusion(Particle *part, int part2);
 
