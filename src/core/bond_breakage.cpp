@@ -58,6 +58,10 @@ break_simple_pair_bond(t,p1,p2);
 delete_all_pair_bonds_local(
    local_particles[local_particles[p1]->p.vs_relative_to_particle_id],
    local_particles[local_particles[p2]->p.vs_relative_to_particle_id]);
+
+   // Delete the virtual sites
+   remove_particle(p1);
+   remove_particle(p2);
 }
 
 void print_queue_entry(int t, int p1, int p2)
