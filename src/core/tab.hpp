@@ -228,6 +228,7 @@ inline int calc_tab_bond_force(Particle *p1, Particle *p2, Bonded_ia_parameters 
    if (iaparams->p.tab.breakable) {
      // Queue for graceful bond breakage
      bond_breakage().queue_breakage(iaparams->p.tab.bond_id, p1->p.identity,p2->p.identity);
+     return 0;
    }
    else
    {
