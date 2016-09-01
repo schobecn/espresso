@@ -409,6 +409,9 @@ void place_vs_and_relate_to_particle(double* pos, int relate_to)
 {
  
 	  place_particle(max_seen_particle+1,pos);
+	  #ifdef ROTATION_PER_PARTICLE
+	    (local_particles[max_seen_particle+1])->p.rotation=0;
+	  #endif
 	  vs_relate_to(max_seen_particle,relate_to);
 	  
 	  (local_particles[max_seen_particle])->p.isVirtual=1;
