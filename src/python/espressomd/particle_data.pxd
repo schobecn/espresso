@@ -16,10 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from _system cimport *
+from __future__ import print_function, absolute_import
+from espressomd._system cimport *
 # Here we create something to handle particles
 cimport numpy as np
-from utils cimport *
+from espressomd.utils cimport *
 from libcpp cimport bool
 
 include "myconfig.pxi"
@@ -234,3 +235,4 @@ cdef class ParticleSlice:
 
 cdef extern from "grid.hpp":
     cdef inline void fold_position(double*, int*)
+    void unfold_position(double pos[3], int image_box[3]) 

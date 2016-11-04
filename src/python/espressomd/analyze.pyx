@@ -17,23 +17,24 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # For C-extern Analysis
+from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-cimport c_analyze
-cimport utils
-cimport particle_data
-import utils
-import code_info
-import particle_data
+from . cimport c_analyze
+from . cimport utils
+from . cimport particle_data
+from . import utils
+from . import code_info
+from . import particle_data
 from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp.map cimport map  # import std::map as map
-from interactions import *
-from interactions cimport *
+from .interactions import *
+from espressomd.interactions cimport *
 import numpy as np
 cimport numpy as np
 from globals cimport n_configs, min_box_l
 from collections import OrderedDict
-from _system import System
+from ._system import System
 
 
 class Analysis:
@@ -45,12 +46,27 @@ class Analysis:
             raise TypeError("An instance of System is required as argument")
         self._system=system            
 
- 
-    
-#
-# Minimal distance between particles
-#
-    
+    #
+    # Append configs    
+    #
+
+    def append(self):
+        """Append configuration for averaged analysis
+          append()
+        """
+        if c_analyze.n_part == 0:
+            raise Exception("No particles to append!")
+        if (c_analyze.n_configs > 0) and (c_analyze.n_part_conf != c_analyze.n_part):
+            raise Exception("All configurations stored must have the same length")
+        #sorPartCfg() has to be called before analyze_append()
+        if not c_analyze.sortPartCfg():
+            raise Exception("for analyze, store particles consecutively starting with 0.")
+
+        c_analyze.analyze_append()
+
+    #
+    # Minimal distance between particles
+    #
     
     def mindist(self, p1='default', p2='default'):
         """Minimal distance between particles
@@ -107,7 +123,7 @@ class Analysis:
             raise Exception("Only one of id or pos may be specified\n" + __doc__)
     
         cdef double cpos[3]
-        if self._system.n_part == 0:
+        if len(self._system.part) == 0:
             raise Exception("no particles")
     
         # Get position
@@ -581,7 +597,7 @@ class Analysis:
         if number_of_chains < 0:
             raise ValueError('number_of_chains must be greater than zero')
         c_analyze.sortPartCfg()
-        if chain_start + chain_length * number_of_chains >= self._system.n_part:
+        if chain_start + chain_length * number_of_chains >= len(self._system.part):
             raise ValueError(
                 'start+number_of_chains*chain_length cannot be greater than the total number of particles.')
         c_analyze.chain_start = chain_start
@@ -727,7 +743,7 @@ class Analysis:
     
     
     def angularmomentum(self, p_type=None):
-        print "p_type = ", p_type
+        print("p_type = ", p_type)
         check_type_or_throw_except(
             p_type, 1, int,   "p_type has to be an int")
     
@@ -853,9 +869,9 @@ class Analysis:
             check_type_or_throw_except(avk, 1, float, "avk has to be a float")
             _Vkappa["avk"] = avk
             if (_Vkappa["avk"] <= 0.0):
+                result = _Vkappa["Vk1"] = _Vkappa["Vk2"] = _Vkappa["avk"] = 0.0
                 raise Exception(
                     "ERROR: # of averages <avk> has to be positive! Resetting values.")
-                result = _Vkappa["Vk1"] = _Vkappa["Vk2"] = _Vkappa["avk"] = 0.0
             else:
                 result = _Vkappa["Vk2"] / _Vkappa["avk"] - \
                     (_Vkappa["Vk1"] / _Vkappa["avk"])**2

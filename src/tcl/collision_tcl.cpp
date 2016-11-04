@@ -30,6 +30,10 @@
 
 int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char **argv) 
 {
+  // Default value
+  double rel_vs_placement=0.5;
+  
+  
   // If no argumens are given, print status
   if (argc==1) {
     char s[128 + 3*TCL_INTEGER_SPACE + TCL_DOUBLE_SPACE];
@@ -83,7 +87,7 @@ int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char 
 
   // Otherwise, we set parameters
   if (ARG0_IS_S("off")) {
-    collision_detection_set_params(0,0,0,0,0,0,0,0,0,0,0);
+    collision_detection_set_params(0,0,0,0,0,0,0,0,0,0,0,0);
     return TCL_OK;
   }
   else {
@@ -130,7 +134,7 @@ int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char 
     }
     else if (ARG0_IS_S("bind_at_point_of_collision")) {
       mode |= COLLISION_MODE_BOND | COLLISION_MODE_VS;
-      if (argc != 5) {
+      if ((argc != 5) || (argc != 6))    {
 	Tcl_AppendResult(interp, "Not enough parameters, need a distance, two bond types, and a particle type as args.", (char*) NULL);
 	return TCL_ERROR;
       }
@@ -150,6 +154,17 @@ int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char 
 	Tcl_AppendResult(interp, "Need a particle type as 4th arg.", (char*) NULL);
 	return TCL_ERROR;
       }
+      if (argc==6) {
+        if (!ARG_IS_D(5,rel_vs_placement)) {
+	Tcl_AppendResult(interp, "need a double as 5th arg.", (char*) NULL);
+      }
+      if (rel_vs_placement>0.5) {
+	Tcl_AppendResult(interp, "Only values up to 0.5 are allowed for rel_vs_placement.", (char*) NULL);
+      }
+      argc-=1; argv+=1;
+    }
+
+      
       argc -= 5; argv += 5;
     }
     else if (ARG0_IS_S("glue_to_surface")) {
@@ -221,7 +236,7 @@ int tclcommand_on_collision(ClientData data, Tcl_Interp *interp, int argc, char 
       return TCL_ERROR;
     }
     
-    int res = collision_detection_set_params(mode,d,bond_centers,bond_vs,t,d2,tg,tv,ta,bond_three_particles,angle_resolution);
+    int res = collision_detection_set_params(mode,d,bond_centers,bond_vs,t,d2,tg,tv,ta,bond_three_particles,angle_resolution,rel_vs_placement);
 
     switch (res) {
     case 1:

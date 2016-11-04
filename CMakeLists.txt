@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 
 project(ESPResSo)
 
@@ -31,7 +31,7 @@ if (NOT ${SOVERSION} MATCHES "^[1-9]+$")
 endif (NOT ${SOVERSION} MATCHES "^[1-9]+$")
 
 ######################################################################
-# CMake internal vars 
+# CMake internal vars
 ######################################################################
 
 # Cmake modules/macros are in a subdirectory to keep this file cleaner
@@ -52,6 +52,7 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 option(WITH_PYTHON "Build python interface"  ON)
 option(WITH_TCL    "Build tcl interface"     ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
+option(WITH_HDF5   "Build with HDF5 support" ON)
 option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" ON)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
@@ -97,23 +98,31 @@ if (WITH_CUDA)
       set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -O3")
     endif()
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_50,code=sm_50")
+    list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
+    SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
     if (APPLE)
       set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
     endif()
   endif(CUDA_FOUND)
-endif(WITH_CUDA)     
+endif(WITH_CUDA)
 
-find_package(PythonInterp 2)
+find_package(PythonInterp)
 
 if (WITH_PYTHON)
   find_package(Cython 0.23 REQUIRED)
-  find_package(PythonLibs REQUIRED)
+  execute_process(COMMAND ${PYTHON_EXECUTABLE}
+                -c "import distutils.sysconfig as cg; print(cg.get_python_inc())"
+                OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS OUTPUT_STRIP_TRAILING_WHITESPACE)
   find_package(NumPy REQUIRED)
-  list(APPEND LIBRARIES ${PYTHON_LIBRARY})
   execute_process(COMMAND ${PYTHON_EXECUTABLE} 
-                -c "import distutils.sysconfig as cg; print cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}')"
+                -c "import distutils.sysconfig as cg; print(cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}'))"
                 OUTPUT_VARIABLE PYTHON_INSTDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(PYTHON_VERSION_MAJOR EQUAL 2)
+    set(CYTHON_FLAGS "-2" CACHE STRING "Flags used by the Cython compiler during all build types.")
+  else()
+    set(CYTHON_FLAGS "-3" CACHE STRING "Flags used by the Cython compiler during all build types.")
+  endif()
 endif(WITH_PYTHON)
 
 find_package(FFTW3)
@@ -134,12 +143,14 @@ if (WITH_TCL)
   list(APPEND LIBRARIES ${TCL_LIBRARY})
 endif()
 
+if (WITH_HDF5)
 find_package(HDF5)
 if(HDF5_FOUND)
   set(H5MD 1)
   list(APPEND LIBRARIES ${HDF5_LIBRARIES})
   include_directories(${HDF5_INCLUDE_DIRS})
-endif()
+endif(HDF5_FOUND)
+endif(WITH_HDF5)
 
 if(WITH_SCAFACOS)
   find_package(PkgConfig)
