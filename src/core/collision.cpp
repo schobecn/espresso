@@ -182,9 +182,11 @@ void detect_collision(Particle* p1, Particle* p2)
   // Obtain distance between particles
   double dist_betw_part = sqrt(distance2vec(p1->r.p, p2->r.p, vec21));
   //TRACE(printf("%d: Distance between particles %lf %lf %lf, Scalar: %f\n",this_node,vec21[0],vec21[1],vec21[2], dist_betw_part));
-  if (dist_betw_part > collision_params.distance)
+  //  if (dist_betw_part > collision_params.distance)
+  // collsion distance depends on Hertz-sigma -> different particle sizes can collide
+  if (dist_betw_part > get_ia_param(p1->p.type,p2->p.type)->Hertzian_sig)
     return;
-
+  
   //TRACE(printf("%d: particles %d and %d within bonding distance %lf\n", this_node, p1->p.identity, p2->p.identity, dist_betw_part));
   // If we are in the glue to surface mode, check that the particles
   // are of the right type
@@ -282,6 +284,26 @@ void detect_collision(Particle* p1, Particle* p2)
 
 
     queue_collision(part1,part2,new_position);
+    
+    // set particle velocities to zero after collision
+    //p1->m.v[0]=0.0;
+    //p1->m.v[1]=0.0;
+    //p1->m.v[2]=0.0;
+    //p2->m.v[0]=0.0;
+    //p2->m.v[1]=0.0;
+    //p2->m.v[2]=0.0;
+    
+    // better: set particle momentum to zero after collison (with keeping total momentum constant)
+        
+    printf("particle mass 1: %f\n", p1->p.mass);
+    printf("particle mass 2: %f\n", p2->p.mass);
+
+    printf("particle velocity 1: %f\n", p1->m.v[0]);
+    printf("particle velocity 2: %f\n", p2->m.v[0]);
+
+    
+    p1->m.v[1] = p1->p.mass * p1->m.v[0] + p2->p.mass * p2->m.v[0];
+    printf("variable test: %f\n", p2->m.v[1]);
   }
 }
 
