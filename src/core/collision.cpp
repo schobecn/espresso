@@ -285,52 +285,16 @@ void detect_collision(Particle* p1, Particle* p2)
 
     queue_collision(part1,part2,new_position);
     
-    // set particle velocities to zero after collision
-    p1->m.v[0]=0.0;
-    p1->m.v[1]=0.0;
-    p1->m.v[2]=0.0;
-    p2->m.v[0]=0.0;
-    p2->m.v[1]=0.0;
-    p2->m.v[2]=0.0;
+
+    // conserve momentum when particles collide
+
+    p1->m.v[0] = (p1->p.mass * p1->m.v[0] + p2->p.mass * p2->m.v[0]) / (p1->p.mass + p2->p.mass);
+    p2->m.v[0] = p1->m.v[0];
+    p1->m.v[1] = (p1->p.mass * p1->m.v[1] + p2->p.mass * p2->m.v[1]) / (p1->p.mass + p2->p.mass);
+    p2->m.v[1] = p1->m.v[1];
+    p1->m.v[2] = (p1->p.mass * p1->m.v[2] + p2->p.mass * p2->m.v[2]) / (p1->p.mass + p2->p.mass);
+    p2->m.v[2] = p1->m.v[2];
     
-    // better: set particle momentum to zero after collison (with keeping total momentum constant)
-        
-    //printf("particle mass 1: %f\n", p1->p.mass);
-    //printf("particle mass 2: %f\n", p2->p.mass);
-
-    //printf("particle velocity 1: %f\n", p1->m.v[0]);
-    //printf("particle velocity 2: %f\n", p2->m.v[0]);
-
-     
-    //double diff = p1->p.mass * p1->m.v[0] - p2->p.mass * p2->m.v[0];
-    //printf("diff: %f\n", diff);
-
-    //double total_momentum = p1->p.mass * p1->m.v[0] + p2->p.mass * p2->m.v[0];
-    //printf("total_momentum: %f\n", total_momentum);
-
-    //double velocity1 = p1->m.v[0];
-    //double velocity2 = p2->m.v[0];
-    
-    //p1->m.v[0] = 0.5 * (velocity1 + p2->p.mass / p1->p.mass * velocity2);
-    //p2->m.v[0] = 0.5 * (p1->p.mass /p2->p.mass * velocity1 + velocity2);
-    
-    //p2->m.v[0] = - 0.5 / p2->p.mass * diff;
-    //p1->m.v[0] = - (p2->p.mass / p1->p.mass) * p2->m.v[0];
-
-    //p1->m.v[0] = total_momentum / (2 * p1->p.mass);
-    //p1->m.v[0] = 0.000004;
-    //p2->m.v[0] = p1->p.mass /p2->p.mass * p1->m.v[0];
-
-    //printf("new velocities of particle 1 and 2: %f\t%f\n", p1->m.v[0], p2->m.v[0]);
-    
-    //double diff_new = p1->p.mass * p1->m.v[0] - p2->p.mass * p2->m.v[0];
-    //printf("diff_new: %f\n", diff_new);
-
-    //double total_momentum_new = p1->p.mass * p1->m.v[0] + p2->p.mass * p2->m.v[0];
-    //printf("total_momentum_new: %f\n", total_momentum_new);
-
-
-    //printf("velocities in y and z direction: %f\t%f\t%f\t%f\n", p1->m.v[1], p1->m.v[2], p2->m.v[1], p2->m.v[2]);
   }
 }
 
