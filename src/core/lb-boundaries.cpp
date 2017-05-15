@@ -319,6 +319,43 @@ void lb_init_boundaries() {
         }
       }
     }
+    
+    // printf("init voxels\n\n");
+    // SET VOXEL BOUNDARIES DIRECTLY
+    int xxx, yyy, zzz = 0;
+    char line[80];
+    for (n = 0; n < n_lb_boundaries; n++) {
+      switch (lb_boundaries[n].type) {
+      case LB_BOUNDARY_VOXEL:
+        FILE *fp;
+        fp = fopen(lb_boundaries[n].c.voxel.filename, "r");
+
+        while (fgets(line, 80, fp) != NULL) {
+		sscanf(line, "%d %d %d", &xxx, &yyy, &zzz);
+
+		size_of_index = (number_of_boundnodes + 1) * sizeof(int);
+		host_boundary_node_list =
+			(int *)Utils::realloc(host_boundary_node_list, size_of_index);
+		host_boundary_index_list =
+			(int *)Utils::realloc(host_boundary_index_list, size_of_index);
+		host_boundary_node_list[number_of_boundnodes] =
+			xxx + lbpar_gpu.dim_x * yyy + lbpar_gpu.dim_x * lbpar_gpu.dim_y * zzz;
+		host_boundary_index_list[number_of_boundnodes] =
+			n + 1;
+		++number_of_boundnodes;
+		// printf("boundindex %i: \n", number_of_boundnodes);
+		//lbfields[get_linear_index(xxx, yyy, zzz, lblattice.halo_grid)]
+		//    .boundary = n + 1;
+	}
+	fclose(fp);
+
+        break;
+
+      default:
+        break;
+      }
+    }
+
 
     /**call of cuda fkt*/
     float *boundary_velocity =
