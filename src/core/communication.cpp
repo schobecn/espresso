@@ -83,6 +83,8 @@
 #include "topology.hpp"
 #include "virtual_sites.hpp"
 
+#include "utils/Timer.hpp"
+
 using namespace std;
 using Communication::mpiCallbacks;
 
@@ -179,7 +181,8 @@ static int terminated = 0;
   CB(mpi_gather_cuda_devices_slave)                                            \
   CB(mpi_thermalize_cpu_slave)                                                 \
   CB(mpi_scafacos_set_parameters_slave)                                        \
-  CB(mpi_mpiio_slave)
+  CB(mpi_mpiio_slave)							       \
+  CB(mpi_timers_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -3133,6 +3136,42 @@ void mpi_gather_cuda_devices_slave(int dummy1, int dummy2) {
 #ifdef CUDA
   cuda_gather_gpus();
 #endif
+}
+
+/* CS: changes for timer */
+void mpi_timers_slave(int action, int) {
+  switch (action) {
+  case 0: {
+    map<string, Utils::Timing::Timer::Stats> my_stats =
+      Utils::Timing::Timer::get_stats();
+
+    comm_cart.send(0, SOME_TAG, my_stats);
+    break;
+  }
+  case 1:
+    Utils::Timing::Timer::reset_all();
+    break;
+  }
+}
+
+void mpi_reset_timers() {
+  Utils::Timing::Timer::reset_all();
+
+  mpi_call(mpi_timers_slave, 1, 0);
+}
+
+vector<map<string, Utils::Timing::Timer::Stats>> mpi_gather_timers() {
+  vector<map<string, Utils::Timing::Timer::Stats>> ret(comm_cart.size());
+
+  ret[0] = Utils::Timing::Timer::get_stats();
+
+  mpi_call(mpi_timers_slave, 0, 0);
+
+  for (int i = 1; i < ret.size(); ++i) {
+    comm_cart.recv(i, SOME_TAG, ret[i]);
+  }
+
+  return ret;
 }
 
 void mpi_mpiio(const char *filename, unsigned fields, int write) {

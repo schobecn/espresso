@@ -65,6 +65,8 @@
 #include <cstring>
 #include <mpi.h>
 
+#include "utils/Timer.hpp"
+
 #ifdef VALGRIND_INSTRUMENTATION
 #include <callgrind.h>
 #endif
