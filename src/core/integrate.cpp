@@ -229,6 +229,10 @@ void integrate_ensemble_init() {
 /************************************************************/
 
 void integrate_vv(int n_steps, int reuse_forces) {
+
+  /* CS: timer */
+  Utils::Timing::Timer::get_timer("integrate_vv").start();
+
   /* Prepare the Integrator */
   on_integration_start();
 
@@ -618,6 +622,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
   if (thermo_switch & THERMO_GHMC)
     ghmc_close();
 #endif
+
+  /* CS: timer */
+  Utils::Timing::Timer::get_timer("integrate_vv").stop();
+
 }
 
 /************************************************************/
