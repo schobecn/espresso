@@ -285,6 +285,17 @@ void detect_collision(Particle* p1, Particle* p2)
 
     queue_collision(part1,part2,new_position);
     
+    // for particles which are fixed                                                                
+    // ToDo: abhaengig von flag (fix) statt particle type                                          
+    if (p1->p.type == 1 || p2->p.type == 1) {
+      p1->m.v[0] = 0;
+      p2->m.v[0] = 0;
+      p1->m.v[1] = 0;
+      p2->m.v[1] = 0;
+      p1->m.v[2] = 0;
+      p2->m.v[2] = 0;
+    }
+
 
     // conserve momentum when particles collide
 
