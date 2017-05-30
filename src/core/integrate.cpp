@@ -474,8 +474,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
     bond_breakage().queue.clear();
 
-    
+    /* CS: timer MD + p3m */
+    // Utils::Timing::Timer::get_timer("force_calc").start();
     force_calc();
+    // Utils::Timing::Timer::get_timer("force_calc").stop();
 
     bond_breakage().process_queue();
 
@@ -541,8 +543,19 @@ void integrate_vv(int n_steps, int reuse_forces) {
         ek_integrate();
       } else {
 #endif
-        if (lattice_switch & LATTICE_LB_GPU)
-          lattice_boltzmann_update_gpu();
+
+	// #ifdef WITH_INTRUSIVE_TIMINGS
+	// auto &t = Utils::Timing::Timer::get_timer("lattice_boltzmann_update_gpu");
+	// t.start();
+	Utils::Timing::Timer::get_timer("lattice_boltzmann_update_gpu").start();
+	if (lattice_switch & LATTICE_LB_GPU)
+	  /* CS: LB GPU timer */
+	  lattice_boltzmann_update_gpu();
+	Utils::Timing::Timer::get_timer("lattice_boltzmann_update_gpu").stop();
+	// t.stop();
+	// #endif // WITH_INTRUSIVE_TIMINGS
+	
+	  
 #ifdef ELECTROKINETICS
       }
 #endif

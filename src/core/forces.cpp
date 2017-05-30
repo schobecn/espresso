@@ -31,6 +31,8 @@
 #include "forces_inline.hpp"
 #include "electrokinetics.hpp"
 
+#include "utils/Timer.hpp"
+
 #include <cassert>
 ActorList forceActors;
 
@@ -121,14 +123,21 @@ void check_forces()
 
 void force_calc()
 {
+
+#ifdef WITH_INTRUSIVE_TIMINGS
+  auto &t = Utils::Timing::Timer::get_timer("force_calc");
+  t.start();
+#endif // WITH_INTRUSIVE_TIMINGS
+
   // Communication step: distribute ghost positions
   cells_update_ghosts();
 
   // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
-#ifdef VIRTUAL_SITES
-  update_mol_vel_pos();
-  ghost_communicator(&cell_structure.update_ghost_pos_comm);
-#endif
+  #ifdef VIRTUAL_SITES
+    update_mol_vel_pos();
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+  #endif
+
 
 #if defined(VIRTUAL_SITES_RELATIVE) && defined(LB)
   // This is on a workaround stage:
@@ -149,16 +158,21 @@ espressoSystemInterface.update();
 #ifdef SHANCHEN
   if (lattice_switch & LATTICE_LB_GPU && this_node == 0) lattice_boltzmann_calc_shanchen_gpu();
 #endif // SHANCHEN
-
+   
+  /* CS: coupling timer */
+  //  Utils::Timing::Timer::get_timer("lb_calc_particle_lattice_ia_gpu").start();
   // transfer_momentum_gpu check makes sure the LB fluid doesn't get updated on integrate 0
   // this_node==0 makes sure it is the master node where the gpu exists
   if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu && (this_node == 0) ) lb_calc_particle_lattice_ia_gpu();
+  //  Utils::Timing::Timer::get_timer("lb_calc_particle_lattice_ia_gpu").stop();
+  
 #endif // LB_GPU
 
 #ifdef ELECTROSTATICS
   if (iccp3m_initialized && iccp3m_cfg.set_flag)
     iccp3m_iteration();
 #endif
+  
   init_forces();
 
   for (ActorList::iterator actor = forceActors.begin();
@@ -170,7 +184,11 @@ espressoSystemInterface.update();
 #endif
   }
 
+  /* CS: p3m timer -> komplette Funktion*/
+  //  Utils::Timing::Timer::get_timer("calc_long_range_forces").start();
   calc_long_range_forces();
+  //Utils::Timing::Timer::get_timer("calc_long_range_forces").stop();
+
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED:
@@ -187,8 +205,8 @@ espressoSystemInterface.update();
       calc_link_cell();
     break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_calculate_ia();
-
+    nsq_calculate_ia();    
+    break; // CS: richtig? 
   }
 
 #ifdef OIF_GLOBAL_FORCES
@@ -247,6 +265,11 @@ espressoSystemInterface.update();
   // mark that forces are now up-to-date
   recalc_forces = 0;
 
+#ifdef WITH_INTRUSIVE_TIMINGS
+  t.stop();
+#endif
+
+
 }
 
 void calc_long_range_forces()
@@ -263,7 +286,7 @@ void calc_long_range_forces()
     }
     else
       p3m_charge_assign();
-    
+   
     p3m_calc_kspace_forces(1,0);
     
     if (elc_params.dielectric_contrast_on)
