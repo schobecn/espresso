@@ -236,7 +236,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
   Utils::Timing::Timer::get_timer("integrate_vv").start();
 
   /* Prepare the Integrator */
+  Utils::Timing::Timer::get_timer("on_integration_start").start();
   on_integration_start();
+  Utils::Timing::Timer::get_timer("on_integration_start").stop();
 
 #ifdef IMMERSED_BOUNDARY
   // Here we initialize volume conservation
@@ -400,7 +402,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
       if (steepest_descent_step())
         break;
     } else {
+      Utils::Timing::Timer::get_timer("propagate_vel_pos").start();
       propagate_vel_pos();
+      Utils::Timing::Timer::get_timer("propagate_vel_pos").stop();
+
     }
 
 #ifdef BOND_CONSTRAINT
@@ -475,9 +480,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     bond_breakage().queue.clear();
 
     /* CS: timer MD + p3m */
-    // Utils::Timing::Timer::get_timer("force_calc").start();
+    Utils::Timing::Timer::get_timer("force_calc_0").start();
     force_calc();
-    // Utils::Timing::Timer::get_timer("force_calc").stop();
+    Utils::Timing::Timer::get_timer("force_calc_0").stop();
 
     bond_breakage().process_queue();
 
@@ -522,7 +527,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
 // VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    Utils::Timing::Timer::get_timer("update_mol_vel").start();
     update_mol_vel();
+    Utils::Timing::Timer::get_timer("update_mol_vel").stop();
     if (check_runtime_errors())
       break;
 #endif
@@ -607,7 +614,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
       sim_time += time_step;
     }
 #ifdef COLLISION_DETECTION
+    Utils::Timing::Timer::get_timer("handle_collisions").start();
     handle_collisions();
+    Utils::Timing::Timer::get_timer("handle_collisions").stop();
 #endif
   }
 

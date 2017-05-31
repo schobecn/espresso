@@ -76,6 +76,8 @@
 #include "tab.hpp"
 #include "twist_stack.hpp"
 #include "umbrella.hpp"
+#include "utils/Timer.hpp"
+
 #ifdef ELECTROSTATICS
 #include "actor/EwaldGPU_ShortRange.hpp"
 #include "bonded_coulomb.hpp"
@@ -393,7 +395,18 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 #ifdef P3M
   case COULOMB_ELC_P3M: {
     if (q1q2) {
-      p3m_add_pair_force(q1q2, d, dist2, dist, force);
+      
+      /* CS: add p3m timer, delete old version */
+      // p3m_add_pair_force(q1q2, d, dist2, dist, force);
+
+#ifdef WITH_INTRUSIVE_TIMINGS
+      auto &t_p3m_add_pair_force = Utils::Timing::Timer::get_timer("p3m_add_pair_force");
+      t_p3m_add_pair_force.start();
+#endif
+      p3m_add_pair_force(q1q2,d,dist2,dist,force);
+#ifdef WITH_INTRUSIVE_TIMINGS
+      t_p3m_add_pair_force.stop();
+#endif
 
       // forces from the virtual charges
       // they go directly onto the particles, since they are not pairwise forces
