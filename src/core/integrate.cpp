@@ -236,74 +236,16 @@ void integrate_vv(int n_steps, int reuse_forces) {
   Utils::Timing::Timer::get_timer("integrate_vv").start();
 
   /* Prepare the Integrator */
-  Utils::Timing::Timer::get_timer("on_integration_start").start();
+  Utils::Timing::Timer::get_timer("prepare_integrator").start();
   on_integration_start();
-  Utils::Timing::Timer::get_timer("on_integration_start").stop();
-
-#ifdef IMMERSED_BOUNDARY
-  // Here we initialize volume conservation
-  // This function checks if the reference volumes have been set and if
-  // necessary calculates them
-  IBM_InitVolumeConservation();
-#endif
-
-  /* if any method vetoes (P3M not initialized), immediately bail out */
-  if (check_runtime_errors())
-    return;
-
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step > 0.) {
-    mts_max = time_step / smaller_time_step;
-#ifdef NPT
-    if (integ_switch == INTEG_METHOD_NPT_ISO) {
-      current_time_step_is_small = 1;
-      // Compute forces for small timestep -> get virial contribution.
-      if (recalc_forces)
-        thermo_heat_up();
-      force_calc();
-      thermo_cool_down();
-      ghost_communicator(&cell_structure.collect_ghost_force_comm);
-      current_time_step_is_small = 0;
-      // Store virial
-      for (int j = 0; j < 3; ++j)
-        virial_store[j] = nptiso.p_vir[j];
-      thermo_heat_up();
-      force_calc();
-      thermo_cool_down();
-      ghost_communicator(&cell_structure.collect_ghost_force_comm);
-      rescale_forces();
-    }
-#endif
-  }
-#endif
 
   /* Verlet list criterion */
   skin2 = SQR(0.5 * skin);
 
-  INTEG_TRACE(fprintf(
-      stderr, "%d: integrate_vv: integrating %d steps (recalc_forces=%d)\n",
-      this_node, n_steps, recalc_forces));
-
-  /* Integration Step: Preparation for first integration step:
-     Calculate forces f(t) as function of positions p(t) ( and velocities v(t) )
-     */
-  /* reuse_forces logic:
-     -1: recalculate forces unconditionally, mostly used for timing
-      0: recalculate forces if recalc_forces is set, meaning it is probably
-     necessary
-      1: do not recalculate forces. Mostly when reading checkpoints with forces
-   */
+  // CS: reuse_forces = 0, recalc_forces = 1; am Anfang und Ende der Simulation aufgerufen
   if (reuse_forces == -1 || (recalc_forces && reuse_forces != 1)) {
     thermo_heat_up();
 
-#ifdef LB
-    transfer_momentum = 0;
-    if (lattice_switch & LATTICE_LB && this_node == 0)
-      runtimeWarning("Recalculating forces, so the LB coupling forces are not "
-                     "included in the particle force the first time step. This "
-                     "only matters if it happens frequently during "
-                     "sampling.\n");
-#endif
 #ifdef LB_GPU
     transfer_momentum_gpu = 0;
     if (lattice_switch & LATTICE_LB_GPU && this_node == 0)
@@ -314,87 +256,42 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
     
     bond_breakage().queue.clear();
-
-    
     force_calc();
-
     bond_breakage().process_queue();
-
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       rescale_forces();
 #ifdef ROTATION
       convert_initial_torques();
 #endif
     }
-
     thermo_cool_down();
-
-#ifdef MULTI_TIMESTEP
-#ifdef NPT
-    if (smaller_time_step > 0. && integ_switch == INTEG_METHOD_NPT_ISO)
-      for (int j = 0; j < 3; ++j)
-        nptiso.p_vir[j] += virial_store[j];
-#endif
-#endif
-
 #ifdef COLLISION_DETECTION
     handle_collisions();
 #endif
   }
-
-#ifdef GHMC
-  if (thermo_switch & THERMO_GHMC)
-    ghmc_init();
-#endif
-
-  if (thermo_switch & THERMO_CPU)
+ 
+  if (thermo_switch & THERMO_CPU) {
     mpi_thermalize_cpu(temperature);
-
+  }
+    
   if (check_runtime_errors())
     return;
 
   n_verlet_updates = 0;
 
-#ifdef VALGRIND_INSTRUMENTATION
-  CALLGRIND_START_INSTRUMENTATION;
-#endif
+  Utils::Timing::Timer::get_timer("prepare_integrator").stop();
 
   /* Integration loop */
+  Utils::Timing::Timer::get_timer("integration_loop").start();
   for (int step = 0; step < n_steps; step++) {
-    INTEG_TRACE(fprintf(stderr, "%d: STEP %d\n", this_node, step));
+    //INTEG_TRACE(fprintf(stderr, "%d: STEP %d\n", this_node, step));
 
-#ifdef BOND_CONSTRAINT
-    save_old_pos();
-#endif
-
-#ifdef GHMC
-    if (thermo_switch & THERMO_GHMC) {
-      if (step % ghmc_nmd == 0)
-        ghmc_momentum_update();
-    }
-#endif
-
-#ifdef SD
-    if (thermo_switch & THERMO_SD) {
-      runtimeWarning("Use integrate_sd to use Stokesian Dynamics Thermalizer.");
-    }
-    if (thermo_switch & THERMO_BD) {
-      runtimeWarning("Use integrate_sd to use Brownian Dynamics Thermalizer.");
-    }
-#endif
-
+    Utils::Timing::Timer::get_timer("integration_step_1_2").start();
     /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
        v(t+0.5*dt) = v(t) + 0.5*dt * f(t)
        p(t + dt)   = p(t) + dt * v(t+0.5*dt)
-       NOTE 1: Prefactors do not occur in formulas since we use
-       rescaled forces and velocities.
-       NOTE 2: Depending on the integration method Step 1 and Step 2
-       cannot be combined for the translation.
     */
     if (integ_switch == INTEG_METHOD_NPT_ISO
-#ifdef NEMD
-        || nemd_method != NEMD_METHOD_OFF
-#endif
         ) {
       propagate_vel();
       propagate_pos();
@@ -402,115 +299,34 @@ void integrate_vv(int n_steps, int reuse_forces) {
       if (steepest_descent_step())
         break;
     } else {
-      Utils::Timing::Timer::get_timer("propagate_vel_pos").start();
       propagate_vel_pos();
-      Utils::Timing::Timer::get_timer("propagate_vel_pos").stop();
-
     }
-
-#ifdef BOND_CONSTRAINT
-    /**Correct those particle positions that participate in a rigid/constrained
-     * bond */
-    cells_update_ghosts();
-
-    correct_pos_shake();
-#endif
 
 #ifdef ELECTROSTATICS
     if (coulomb.method == COULOMB_MAGGS) {
       maggs_propagate_B_field(0.5 * time_step);
     }
 #endif
+    Utils::Timing::Timer::get_timer("integration_step_1_2").stop();
 
-#ifdef NPT
-    if (check_runtime_errors())
-      break;
-#endif
-
-#ifdef MULTI_TIMESTEP
-    if (smaller_time_step > 0) {
-      current_time_step_is_small = 1;
-      /* Calculate the forces */
-      thermo_heat_up();
-      force_calc();
-      thermo_cool_down();
-      ghost_communicator(&cell_structure.collect_ghost_force_comm);
-      rescale_forces();
-      for (mts_index = 0; mts_index < mts_max; ++mts_index) {
-        /* Small integration steps */
-        /* Propagate velocities and positions */
-        /* Assumes: not NEMD_METHOD_OFF; NPT not updated during small steps */
-        if (integ_switch == INTEG_METHOD_NPT_ISO ||
-            nemd_method != NEMD_METHOD_OFF) {
-          propagate_vel();
-          propagate_pos();
-        } else
-          propagate_vel_pos();
-        cells_update_ghosts();
-        force_calc();
-        ghost_communicator(&cell_structure.collect_ghost_force_comm);
-#ifdef NPT
-        // Store virial
-        for (int j = 0; j < 3; ++j)
-          virial_store[j] = nptiso.p_vir[j];
-#endif
-        rescale_forces_propagate_vel();
-      }
-      current_time_step_is_small = 0;
-      thermo_heat_up();
-      force_calc();
-      thermo_cool_down();
-      ghost_communicator(&cell_structure.collect_ghost_force_comm);
-      rescale_forces();
-      recalc_forces = 0;
-    }
-#endif
-
+    Utils::Timing::Timer::get_timer("integration_step_3").start();
 /* Integration Step: Step 3 of Velocity Verlet scheme:
    Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
    v(t+0.5*dt) ) */
-
-#ifdef LB
-    transfer_momentum = 1;
-#endif
 #ifdef LB_GPU
     transfer_momentum_gpu = 1;
 #endif
-
     bond_breakage().queue.clear();
-
     /* CS: timer MD + p3m */
-    Utils::Timing::Timer::get_timer("force_calc_0").start();
+    Utils::Timing::Timer::get_timer("force_calc").start();
     force_calc();
-    Utils::Timing::Timer::get_timer("force_calc_0").stop();
-
+    Utils::Timing::Timer::get_timer("force_calc").stop();
     bond_breakage().process_queue();
-
-// IMMERSED_BOUNDARY
-#ifdef IMMERSED_BOUNDARY
-    // Now the forces are computed and need to go into the LB fluid
-    if (lattice_switch & LATTICE_LB)
-      IBM_ForcesIntoFluid_CPU();
-#ifdef LB_GPU
-    if (lattice_switch & LATTICE_LB_GPU)
-      IBM_ForcesIntoFluid_GPU();
-#endif
-#endif
-
-#ifdef CATALYTIC_REACTIONS
-    integrate_reaction();
-#endif
-
     if (check_runtime_errors())
       break;
+    Utils::Timing::Timer::get_timer("integration_step_3").stop();
 
-#ifdef MULTI_TIMESTEP
-#ifdef NPT
-    if (smaller_time_step > 0. && integ_switch == INTEG_METHOD_NPT_ISO)
-      for (int j = 0; j < 3; ++j)
-        nptiso.p_vir[j] += virial_store[j];
-#endif
-#endif
+    Utils::Timing::Timer::get_timer("integration_step_4").start();
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
@@ -519,30 +335,16 @@ void integrate_vv(int n_steps, int reuse_forces) {
       convert_torques_propagate_omega();
 #endif
     }
-// SHAKE velocity updates
-#ifdef BOND_CONSTRAINT
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    correct_vel_shake();
-#endif
+
 // VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    Utils::Timing::Timer::get_timer("update_mol_vel").start();
     update_mol_vel();
-    Utils::Timing::Timer::get_timer("update_mol_vel").stop();
     if (check_runtime_errors())
       break;
 #endif
 
 // progagate one-step functionalities
-#ifdef LB
-    if (lattice_switch & LATTICE_LB)
-      lattice_boltzmann_update();
-
-    if (check_runtime_errors())
-      break;
-#endif
-
 #ifdef LB_GPU
     if (this_node == 0) {
 #ifdef ELECTROKINETICS
@@ -551,16 +353,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
       } else {
 #endif
 
-	// #ifdef WITH_INTRUSIVE_TIMINGS
-	// auto &t = Utils::Timing::Timer::get_timer("lattice_boltzmann_update_gpu");
-	// t.start();
-	Utils::Timing::Timer::get_timer("lattice_boltzmann_update_gpu").start();
+	Utils::Timing::Timer::get_timer("lb_update_gpu").start();
 	if (lattice_switch & LATTICE_LB_GPU)
-	  /* CS: LB GPU timer */
 	  lattice_boltzmann_update_gpu();
-	Utils::Timing::Timer::get_timer("lattice_boltzmann_update_gpu").stop();
-	// t.stop();
-	// #endif // WITH_INTRUSIVE_TIMINGS
+	Utils::Timing::Timer::get_timer("lb_update_gpu").stop();
 	
 	  
 #ifdef ELECTROKINETICS
@@ -569,43 +365,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif // LB_GPU
 
-// IMMERSED_BOUNDARY
-#ifdef IMMERSED_BOUNDARY
-
-    IBM_UpdateParticlePositions();
-// We reset all since otherwise the halo nodes may not be reset
-// NB: the normal Espresso reset is also done after applying the forces
-//    if (lattice_switch & LATTICE_LB) IBM_ResetLBForces_CPU();
-#ifdef LB_GPU
-// if (lattice_switch & LATTICE_LB_GPU) IBM_ResetLBForces_GPU();
-#endif
-
-    if (check_runtime_errors())
-      break;
-
-    // Ghost positions are now out-of-date
-    // We should update.
-    // Actually we seem to get the same results whether we do this here or not,
-    // but it is safer to do it
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-
-#endif // IMMERSED_BOUNDARY
-
 #ifdef ELECTROSTATICS
     if (coulomb.method == COULOMB_MAGGS) {
       maggs_propagate_B_field(0.5 * time_step);
-    }
-#endif
-
-#ifdef NPT
-    if ((this_node == 0) && (integ_switch == INTEG_METHOD_NPT_ISO))
-      nptiso.p_inst_av += nptiso.p_inst;
-#endif
-
-#ifdef GHMC
-    if (thermo_switch & THERMO_GHMC) {
-      if (step % ghmc_nmd == ghmc_nmd - 1)
-        ghmc_mc();
     }
 #endif
 
@@ -614,38 +376,19 @@ void integrate_vv(int n_steps, int reuse_forces) {
       sim_time += time_step;
     }
 #ifdef COLLISION_DETECTION
-    Utils::Timing::Timer::get_timer("handle_collisions").start();
     handle_collisions();
-    Utils::Timing::Timer::get_timer("handle_collisions").stop();
 #endif
   }
+  Utils::Timing::Timer::get_timer("integration_step_4").stop();
+  Utils::Timing::Timer::get_timer("integration_loop").stop();
 
-#ifdef VALGRIND_INSTRUMENTATION
-  CALLGRIND_STOP_INSTRUMENTATION;
-#endif
-
+  Utils::Timing::Timer::get_timer("verlet_list_statistics").start();
   /* verlet list statistics */
   if (n_verlet_updates > 0)
     verlet_reuse = n_steps / (double)n_verlet_updates;
   else
     verlet_reuse = 0;
-
-#ifdef NPT
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    nptiso.invalidate_p_vel = 0;
-    MPI_Bcast(&nptiso.p_inst, 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&nptiso.p_diff, 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&nptiso.volume, 1, MPI_DOUBLE, 0, comm_cart);
-    if (this_node == 0)
-      nptiso.p_inst_av /= 1.0 * n_steps;
-    MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, comm_cart);
-  }
-#endif
-
-#ifdef GHMC
-  if (thermo_switch & THERMO_GHMC)
-    ghmc_close();
-#endif
+  Utils::Timing::Timer::get_timer("verlet_list_statistics").stop();
 
   /* CS: timer */
   Utils::Timing::Timer::get_timer("integrate_vv").stop();

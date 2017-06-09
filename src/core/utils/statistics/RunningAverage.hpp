@@ -26,85 +26,85 @@
 #include <limits>
 
 namespace Utils {
-namespace Statistics {
+  namespace Statistics {
 
-/**
- * \brief Keep running average and variance.
- * The average should be numerically stable.
- */
-template<typename Scalar>
-class RunningAverage {
-public:
-  /* CS: changes for timer */
-  RunningAverage() : m_n(0), m_new_var(0.0), m_min(std::numeric_limits<Scalar>::infinity()),  m_max(-std::numeric_limits<Scalar>::infinity()), m_t(0.0){};
-  void add_sample(Scalar s) {
-    m_n++;
-    m_t = s;
-    if(m_n == 1) {
-      m_old_avg = m_new_avg = s;
-      m_old_var = 0.0;
-      m_min = m_max = s;
-    } else {
-      m_new_avg = m_old_avg + (s - m_old_avg)/m_n;
-      m_new_var = m_old_var + (s - m_old_avg)*(s - m_new_avg);
-
-      m_old_avg = m_new_avg;
-      m_old_var = m_new_var;
+    /**
+     * \brief Keep running average and variance.
+     * The average should be numerically stable.
+     */
+    template<typename Scalar>
+    class RunningAverage {
+    public:
+      /* CS: changes for timer */
+      RunningAverage() : m_n(0), m_new_var(0.0), m_min(std::numeric_limits<Scalar>::infinity()),  m_max(-std::numeric_limits<Scalar>::infinity()), m_t(0.0){};
+      void add_sample(Scalar s) {
+	m_n++;
+	m_t = s;
+	if(m_n == 1) {
+	  m_old_avg = m_new_avg = s;
+	  m_old_var = 0.0;
+	  m_min = m_max = s;
+	} else {
+	  m_new_avg = m_old_avg + (s - m_old_avg)/m_n;
+	  m_new_var = m_old_var + (s - m_old_avg)*(s - m_new_avg);
+	  
+	  m_old_avg = m_new_avg;
+	  m_old_var = m_new_var;
+	  
+	  m_min = std::min(m_min, s);
+	  m_max = std::max(m_max, s);
+	}
+      }
       
-      m_min = std::min(m_min, s);
-      m_max = std::max(m_max, s);
-    }
+      /* CS: changes for timer */
+      void clear() {
+	m_n = 0;
+	m_min = std::numeric_limits<Scalar>::infinity();
+	m_max = -std::numeric_limits<Scalar>::infinity();
+      }
+      
+      int n() const
+      {
+	return m_n;
+      }
+      
+      /** Time of the last sample */
+      Scalar t() const { return m_t; }
+      
+      /** Average of the samples */
+      Scalar avg() const { 
+	if(m_n > 0)
+	  return m_new_avg;
+	else
+	  return 0.0;
+      }
+      /** Variance of the samples */
+      Scalar var() const {
+	if(m_n > 1)
+	  return m_new_var / m_n;
+	else
+	  return 0.0;
+      }
+      /** Standard deviation of the samples */
+      Scalar sig() const {
+	return std::sqrt(var());
+      }
+      
+      /** Minimum */
+      Scalar min() const { return m_min; }
+      
+      /** Minimum */
+      Scalar max() const { return m_max; }
+      
+    private:
+      int m_n;
+      Scalar m_old_avg, m_new_avg;
+      Scalar m_old_var, m_new_var;
+      Scalar m_min, m_max;
+      Scalar m_t;
+    };
+    
   }
-
-  /* CS: changes for timer */
-  void clear() {
-    m_n = 0;
-    m_min = std::numeric_limits<Scalar>::infinity();
-    m_max = -std::numeric_limits<Scalar>::infinity();
-  }
-  
-  int n() const
-  {
-    return m_n;
-  }
-
-  /** Time of the last sample */
-  Scalar t() const { return m_t; }
-
-  /** Average of the samples */
-  Scalar avg() const { 
-    if(m_n > 0)
-      return m_new_avg;
-    else
-      return 0.0;
-  }
-  /** Variance of the samples */
-  Scalar var() const {
-    if(m_n > 1)
-      return m_new_var / m_n;
-    else
-      return 0.0;
-  }
-  /** Standard deviation of the samples */
-  Scalar sig() const {
-    return std::sqrt(var());
-  }
-
-  /** Minimum */
-  Scalar min() const { return m_min; }
-
-  /** Minimum */
-  Scalar max() const { return m_max; }
-
-private:
-  int m_n;
-  Scalar m_old_avg, m_new_avg;
-  Scalar m_old_var, m_new_var;
-  Scalar m_min, m_max;
-  Scalar m_t;
-};
-
-}
 }
 
 #endif

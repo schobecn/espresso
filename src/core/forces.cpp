@@ -124,10 +124,10 @@ void check_forces()
 void force_calc()
 {
 
-#ifdef WITH_INTRUSIVE_TIMINGS
-  auto &t = Utils::Timing::Timer::get_timer("force_calc");
-  t.start();
-#endif // WITH_INTRUSIVE_TIMINGS
+  //#ifdef WITH_INTRUSIVE_TIMINGS
+  //  auto &t = Utils::Timing::Timer::get_timer("force_calc");
+  //t.start();
+  //#endif // WITH_INTRUSIVE_TIMINGS
 
   // Communication step: distribute ghost positions
   cells_update_ghosts();
@@ -265,9 +265,9 @@ espressoSystemInterface.update();
   // mark that forces are now up-to-date
   recalc_forces = 0;
 
-#ifdef WITH_INTRUSIVE_TIMINGS
-  t.stop();
-#endif
+  //#ifdef WITH_INTRUSIVE_TIMINGS
+  //t.stop();
+  //#endif
 
 
 }

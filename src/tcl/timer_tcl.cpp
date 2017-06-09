@@ -59,7 +59,7 @@ int tclcommand_timer(ClientData data, Tcl_Interp *interp, int argc,
       }
     }
   } else if ((argc == 2) && (string(argv[1]) == "reset")) {
-    mpi_reset_timers();
+    //    mpi_reset_timers();
   } else {
     return TCL_ERROR;
   }
