@@ -34,6 +34,7 @@ int harmonic_set_params(int bond_type, double k, double r,double r_cut)
 
   bonded_ia_params[bond_type].p.harmonic.k = k;
   bonded_ia_params[bond_type].p.harmonic.r = r;
+  //r = get_ia_param(p1->p.type,p2->p.type)->Hertzian_sig;
   bonded_ia_params[bond_type].p.harmonic.r_cut = r_cut;
   bonded_ia_params[bond_type].type = BONDED_IA_HARMONIC;
   bonded_ia_params[bond_type].num  = 1;

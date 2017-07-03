@@ -123,22 +123,20 @@ void check_forces()
 
 void force_calc()
 {
-
-  //#ifdef WITH_INTRUSIVE_TIMINGS
-  //  auto &t = Utils::Timing::Timer::get_timer("force_calc");
-  //t.start();
-  //#endif // WITH_INTRUSIVE_TIMINGS
-
+  Utils::Timing::Timer::get_timer("update_ghosts").start();
   // Communication step: distribute ghost positions
   cells_update_ghosts();
+  Utils::Timing::Timer::get_timer("update_ghosts").stop();
 
+  Utils::Timing::Timer::get_timer("update_VIRTUAL_SITES_vel_pos").start();
   // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
-  #ifdef VIRTUAL_SITES
-    update_mol_vel_pos();
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-  #endif
+#ifdef VIRTUAL_SITES
+  update_mol_vel_pos();
+  ghost_communicator(&cell_structure.update_ghost_pos_comm);
+#endif
+  Utils::Timing::Timer::get_timer("update_VIRTUAL_SITES_vel_pos").stop();
 
-
+  Utils::Timing::Timer::get_timer("update_ghosts_2").start();
 #if defined(VIRTUAL_SITES_RELATIVE) && defined(LB)
   // This is on a workaround stage:
   // When using virtual sites relative and LB at the same time, it is necessary
@@ -147,129 +145,96 @@ void force_calc()
   if ((lattice_switch & LATTICE_LB) && cell_structure.type == CELL_STRUCTURE_DOMDEC && (!dd.use_vList) )
     cells_update_ghosts();
 #endif
+  Utils::Timing::Timer::get_timer("update_ghosts_2").stop();
 
-espressoSystemInterface.update();
-
+  Utils::Timing::Timer::get_timer("espressoSystemInterface_update").start();
+  espressoSystemInterface.update();
+  Utils::Timing::Timer::get_timer("espressoSystemInterface_update").stop();
+  
+  Utils::Timing::Timer::get_timer("prepare_collision_queue").start();
 #ifdef COLLISION_DETECTION
   prepare_collision_queue();
 #endif
-
-#ifdef LB_GPU
-#ifdef SHANCHEN
-  if (lattice_switch & LATTICE_LB_GPU && this_node == 0) lattice_boltzmann_calc_shanchen_gpu();
-#endif // SHANCHEN
+  Utils::Timing::Timer::get_timer("prepare_collision_queue").stop();
+  
+// #ifdef LB_GPU
+// #ifdef SHANCHEN
+//   if (lattice_switch & LATTICE_LB_GPU && this_node == 0) lattice_boltzmann_calc_shanchen_gpu();
+// #endif // SHANCHEN
    
-  /* CS: coupling timer */
-  //  Utils::Timing::Timer::get_timer("lb_calc_particle_lattice_ia_gpu").start();
-  // transfer_momentum_gpu check makes sure the LB fluid doesn't get updated on integrate 0
-  // this_node==0 makes sure it is the master node where the gpu exists
-  if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu && (this_node == 0) ) lb_calc_particle_lattice_ia_gpu();
-  //  Utils::Timing::Timer::get_timer("lb_calc_particle_lattice_ia_gpu").stop();
-  
-#endif // LB_GPU
+//   /* CS: coupling timer */
+//   //  Utils::Timing::Timer::get_timer("lb_calc_particle_lattice_ia_gpu").start();
+//   // transfer_momentum_gpu check makes sure the LB fluid doesn't get updated on integrate 0
+//   // this_node==0 makes sure it is the master node where the gpu exists
+//   if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu && (this_node == 0) ) lb_calc_particle_lattice_ia_gpu();
+//   //  Utils::Timing::Timer::get_timer("lb_calc_particle_lattice_ia_gpu").stop();
+// #endif // LB_GPU
 
+  Utils::Timing::Timer::get_timer("iccp3m_iteration").start();
 #ifdef ELECTROSTATICS
-  if (iccp3m_initialized && iccp3m_cfg.set_flag)
+  if (iccp3m_initialized && iccp3m_cfg.set_flag) {
+    printf("test");
     iccp3m_iteration();
+  }
 #endif
+  Utils::Timing::Timer::get_timer("iccp3m_iteration").stop();
   
+  Utils::Timing::Timer::get_timer("init_forces").start();
   init_forces();
+  Utils::Timing::Timer::get_timer("init_forces").stop();
 
+  Utils::Timing::Timer::get_timer("compute_forces").start();    
   for (ActorList::iterator actor = forceActors.begin();
-          actor != forceActors.end(); ++actor)
-  {
-    (*actor)->computeForces(espressoSystemInterface);
+       actor != forceActors.end(); ++actor)
+    {
+      (*actor)->computeForces(espressoSystemInterface);
 #ifdef ROTATION
-    (*actor)->computeTorques(espressoSystemInterface);
+      (*actor)->computeTorques(espressoSystemInterface);
 #endif
-  }
-
-  /* CS: p3m timer -> komplette Funktion*/
-  //  Utils::Timing::Timer::get_timer("calc_long_range_forces").start();
-  calc_long_range_forces();
-  //Utils::Timing::Timer::get_timer("calc_long_range_forces").stop();
-
-
-  switch (cell_structure.type) {
-  case CELL_STRUCTURE_LAYERED:
-    layered_calculate_ia();
-    break;
-  case CELL_STRUCTURE_DOMDEC:
-    if(dd.use_vList) {
-      if (rebuild_verletlist)
-        build_verlet_lists_and_calc_verlet_ia();
-      else
-    calculate_verlet_ia();
     }
-    else
-      calc_link_cell();
-    break;
-  case CELL_STRUCTURE_NSQUARE:
-    nsq_calculate_ia();    
-    break; // CS: richtig? 
-  }
-
-#ifdef OIF_GLOBAL_FORCES
-    double area_volume[2]; //There are two global quantities that need to be evaluated: object's surface and object's volume. One can add another quantity.
-	area_volume[0] = 0.0; 
-	area_volume[1] = 0.0; 
-    for (int i=0;i< MAX_OBJECTS_IN_FLUID;i++){
-        calc_oif_global(area_volume,i);
-        if (fabs(area_volume[0])<1e-100 && fabs(area_volume[1])<1e-100) break;
-        add_oif_global_forces(area_volume,i);
-    }
-#endif
+  Utils::Timing::Timer::get_timer("compute_forces").stop();    
   
-#ifdef IMMERSED_BOUNDARY
-  // Must be done here. Forces need to be ghost-communicated
-    IBM_VolumeConservation();
-#endif
+  Utils::Timing::Timer::get_timer("calc_long_range_forces").start();
+  calc_long_range_forces();
+  Utils::Timing::Timer::get_timer("calc_long_range_forces").stop();
 
+  Utils::Timing::Timer::get_timer("calc_link_cell").start();
+  switch (cell_structure.type) {
+  case CELL_STRUCTURE_DOMDEC:
+    calc_link_cell();
+    break;
+  }
+  Utils::Timing::Timer::get_timer("calc_link_cell").stop();
+
+  Utils::Timing::Timer::get_timer("calc_particle_lattice_ia").start();    
 #ifdef LB
   if (lattice_switch & LATTICE_LB) calc_particle_lattice_ia() ;
 #endif
+  Utils::Timing::Timer::get_timer("calc_particle_lattice_ia").stop();    
+  
+// GPU-Version
+// #ifdef CUDA
+//   copy_forces_from_GPU();
+// #endif
 
-#ifdef COMFORCE
-  calc_comforce();
-#endif
-
-#ifdef METADYNAMICS
-  /* Metadynamics main function */
-  meta_perform();
-#endif
-
-#ifdef CUDA
-  copy_forces_from_GPU();
-#endif
-
+  Utils::Timing::Timer::get_timer("VIRTUAL_SITES_distribute_forces").start();    
   // VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
   ghost_communicator(&cell_structure.collect_ghost_force_comm);
   init_forces_ghosts();
   distribute_mol_force();
 #endif
+  Utils::Timing::Timer::get_timer("VIRTUAL_SITES_distribute_forces").stop();    
 
+  Utils::Timing::Timer::get_timer("ghost_communicator").start();    
   // Communication Step: ghost forces
   ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  Utils::Timing::Timer::get_timer("ghost_communicator").stop();    
 
-  // apply trap forces to trapped molecules
-#ifdef MOLFORCES
-  calc_and_apply_mol_constraints();
-#endif
-
-  // should be pretty late, since it needs to zero out the total force
-#ifdef COMFIXED
-  calc_comfixed();
-#endif
-
+  Utils::Timing::Timer::get_timer("recalc_forces").start();    
   // mark that forces are now up-to-date
   recalc_forces = 0;
-
-  //#ifdef WITH_INTRUSIVE_TIMINGS
-  //t.stop();
-  //#endif
-
-
+  Utils::Timing::Timer::get_timer("recalc_forces").stop();    
 }
 
 void calc_long_range_forces()

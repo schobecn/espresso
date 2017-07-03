@@ -246,6 +246,15 @@ void integrate_vv(int n_steps, int reuse_forces) {
   if (reuse_forces == -1 || (recalc_forces && reuse_forces != 1)) {
     thermo_heat_up();
 
+#ifdef LB
+    transfer_momentum = 0;
+    if (lattice_switch & LATTICE_LB && this_node == 0)
+      runtimeWarning("Recalculating forces, so the LB coupling forces are not "
+		     "included in the particle force the first time step. This "
+		     "only matters if it happens frequently during "
+		     "sampling.\n");
+#endif
+    
 #ifdef LB_GPU
     transfer_momentum_gpu = 0;
     if (lattice_switch & LATTICE_LB_GPU && this_node == 0)
@@ -285,99 +294,101 @@ void integrate_vv(int n_steps, int reuse_forces) {
   Utils::Timing::Timer::get_timer("integration_loop").start();
   for (int step = 0; step < n_steps; step++) {
     //INTEG_TRACE(fprintf(stderr, "%d: STEP %d\n", this_node, step));
-
+    
     Utils::Timing::Timer::get_timer("integration_step_1_2").start();
+    
     /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
        v(t+0.5*dt) = v(t) + 0.5*dt * f(t)
        p(t + dt)   = p(t) + dt * v(t+0.5*dt)
     */
-    if (integ_switch == INTEG_METHOD_NPT_ISO
-        ) {
-      propagate_vel();
-      propagate_pos();
-    } else if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
-      if (steepest_descent_step())
-        break;
-    } else {
-      propagate_vel_pos();
-    }
-
-#ifdef ELECTROSTATICS
-    if (coulomb.method == COULOMB_MAGGS) {
-      maggs_propagate_B_field(0.5 * time_step);
-    }
-#endif
+    propagate_vel_pos();
     Utils::Timing::Timer::get_timer("integration_step_1_2").stop();
-
+    
     Utils::Timing::Timer::get_timer("integration_step_3").start();
-/* Integration Step: Step 3 of Velocity Verlet scheme:
-   Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
-   v(t+0.5*dt) ) */
+    /* Integration Step: Step 3 of Velocity Verlet scheme:
+       Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
+       v(t+0.5*dt) ) */
+
+#ifdef LB
+    transfer_momentum = 1;
+#endif
 #ifdef LB_GPU
     transfer_momentum_gpu = 1;
 #endif
+    
+    Utils::Timing::Timer::get_timer("queue.clear").start();
     bond_breakage().queue.clear();
-    /* CS: timer MD + p3m */
+    Utils::Timing::Timer::get_timer("queue.clear").stop();
+    
     Utils::Timing::Timer::get_timer("force_calc").start();
     force_calc();
     Utils::Timing::Timer::get_timer("force_calc").stop();
+    
+    Utils::Timing::Timer::get_timer("process.queue").start();
     bond_breakage().process_queue();
+    Utils::Timing::Timer::get_timer("process.queue").stop();
+    
     if (check_runtime_errors())
       break;
     Utils::Timing::Timer::get_timer("integration_step_3").stop();
-
+    
     Utils::Timing::Timer::get_timer("integration_step_4").start();
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+      Utils::Timing::Timer::get_timer("rescale_forces_propagate_vel").start();	  
       rescale_forces_propagate_vel();
+      Utils::Timing::Timer::get_timer("rescale_forces_propagate_vel").stop();	  
+      
+      Utils::Timing::Timer::get_timer("convert_torques_propagate_omega").start();	  
 #ifdef ROTATION
       convert_torques_propagate_omega();
 #endif
-    }
-
-// VIRTUAL_SITES update vel
+      Utils::Timing::Timer::get_timer("convert_torques_propagate_omega").stop();	  
+    }       
+    
+    // VIRTUAL_SITES update vel
+    Utils::Timing::Timer::get_timer("update_mol_vel").start();	  
 #ifdef VIRTUAL_SITES
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     update_mol_vel();
     if (check_runtime_errors())
       break;
 #endif
-
+    Utils::Timing::Timer::get_timer("update_mol_vel").stop();	  
+    
 // progagate one-step functionalities
+
+#ifdef LB
+    if (lattice_switch & LATTICE_LB) {
+      Utils::Timing::Timer::get_timer("lb_update").start();
+      lattice_boltzmann_update();
+      Utils::Timing::Timer::get_timer("lb_update").stop();  
+    }
+    if (check_runtime_errors())
+      break;
+#endif
+    
 #ifdef LB_GPU
     if (this_node == 0) {
-#ifdef ELECTROKINETICS
-      if (ek_initialized) {
-        ek_integrate();
-      } else {
-#endif
-
-	Utils::Timing::Timer::get_timer("lb_update_gpu").start();
-	if (lattice_switch & LATTICE_LB_GPU)
-	  lattice_boltzmann_update_gpu();
-	Utils::Timing::Timer::get_timer("lb_update_gpu").stop();
-	
-	  
-#ifdef ELECTROKINETICS
-      }
-#endif
+      //Utils::Timing::Timer::get_timer("lb_update_gpu").start();
+      if (lattice_switch & LATTICE_LB_GPU)
+	lattice_boltzmann_update_gpu();
+      //Utils::Timing::Timer::get_timer("lb_update_gpu").stop();
     }
 #endif // LB_GPU
-
-#ifdef ELECTROSTATICS
-    if (coulomb.method == COULOMB_MAGGS) {
-      maggs_propagate_B_field(0.5 * time_step);
-    }
-#endif
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       /* Propagate time: t = t+dt */
       sim_time += time_step;
     }
+
+    Utils::Timing::Timer::get_timer("handle_collisions").start();	  
 #ifdef COLLISION_DETECTION
     handle_collisions();
 #endif
+    Utils::Timing::Timer::get_timer("handle_collisions").stop();	  
+
   }
   Utils::Timing::Timer::get_timer("integration_step_4").stop();
   Utils::Timing::Timer::get_timer("integration_loop").stop();
@@ -459,21 +470,7 @@ void rescale_forces_propagate_vel() {
   int i, j, np, c;
   double scale;
 
-#ifdef NPT
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
-  }
-#endif
-
   scale = 0.5 * time_step * time_step;
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step > 0.) {
-    if (current_time_step_is_small)
-      scale = 0.5 * smaller_time_step * smaller_time_step;
-    else
-      scale = 0.5 * smaller_time_step * time_step;
-  }
-#endif
   INTEG_TRACE(
       fprintf(stderr, "%d: rescale_forces_propagate_vel:\n", this_node));
 
@@ -502,22 +499,8 @@ void rescale_forces_propagate_vel() {
 #ifdef EXTERNAL_FORCES
         if (!(p[i].p.ext_flag & COORD_FIXED(j))) {
 #endif
-#ifdef NPT
-          if (integ_switch == INTEG_METHOD_NPT_ISO &&
-              (nptiso.geometry & nptiso.nptgeom_dir[j])) {
-            nptiso.p_vel[j] += SQR(p[i].m.v[j]) * (p[i]).p.mass;
-#ifdef MULTI_TIMESTEP
-            if (smaller_time_step > 0. && current_time_step_is_small == 1)
-              p[i].m.v[j] += p[i].f.f[j];
-            else
-#endif
-              p[i].m.v[j] +=
-                  p[i].f.f[j] +
-                  friction_therm0_nptiso(p[i].m.v[j]) / (p[i]).p.mass;
-          } else
-#endif
-            /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
-            p[i].m.v[j] += p[i].f.f[j];
+	  /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
+	  p[i].m.v[j] += p[i].f.f[j];
 #ifdef EXTERNAL_FORCES
         }
 #endif
@@ -528,12 +511,6 @@ void rescale_forces_propagate_vel() {
           p[i].m.v[0], p[i].m.v[1], p[i].m.v[2]));
     }
   }
-#ifdef NPT
-#ifdef MULTI_TIMESTEP
-  if (smaller_time_step < 0. || current_time_step_is_small == 0)
-#endif
-    finalize_p_inst_npt();
-#endif
 }
 
 void finalize_p_inst_npt() {
