@@ -394,11 +394,13 @@ void lb_init_boundaries() {
     int node_domain_position[3], offset[3];
     int the_boundary = -1;
     map_node_array(this_node, node_domain_position);
-
+    
     offset[0] = node_domain_position[0] * lblattice.grid[0];
     offset[1] = node_domain_position[1] * lblattice.grid[1];
     offset[2] = node_domain_position[2] * lblattice.grid[2];
 
+    //printf("node_domain_pos = [%d %d %d], lblattice.grid = [%d %d %d], offset_ = [%d %d %d]\n", node_domain_position[0], node_domain_position[1], node_domain_position[2], lblattice.grid[0], lblattice.grid[1], lblattice.grid[2], offset[0], offset[1], offset[2]);
+    
     for (n = 0; n < lblattice.halo_grid_volume; n++) {
       lbfields[n].boundary = 0;
     }
@@ -484,7 +486,7 @@ void lb_init_boundaries() {
       }
     }
     // printf("init voxels\n\n");
-    // SET VOXEL BOUNDARIES DIRECTLY
+    // SET VOXEL BOUNDARIES DIRECTLY (CPU)
     int xxx, yyy, zzz = 0;
     char line[80];
     for (n = 0; n < n_lb_boundaries; n++) {
@@ -492,13 +494,21 @@ void lb_init_boundaries() {
       case LB_BOUNDARY_VOXEL:
         FILE *fp;
         fp = fopen(lb_boundaries[n].c.voxel.filename, "r");
-
+	//CS: check whether file exists
         while (fgets(line, 80, fp) != NULL) {
           sscanf(line, "%d %d %d", &xxx, &yyy, &zzz);
-          lbfields[get_linear_index(xxx, yyy, zzz, lblattice.halo_grid)]
-              .boundary = n + 1;
-        }
-        fclose(fp);
+	  // CS: local grid parameters
+	  if (offset[0] <= xxx && xxx <= offset[0] + lblattice.grid[0]) {
+	    if (offset[1] <= yyy && yyy <= offset[1] + lblattice.grid[1]) {
+	      if (offset[2] <= zzz && zzz <= offset[2] + lblattice.grid[2]) {
+	  
+		lbfields[get_linear_index((xxx-offset[0]+lblattice.halo_size), (yyy-offset[1]+lblattice.halo_size), (zzz-offset[2]+lblattice.halo_size), lblattice.halo_grid)]
+		  .boundary = n + 1;
+	      }
+	    }
+	  }
+	}
+	fclose(fp);
 
         break;
 

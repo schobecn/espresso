@@ -268,13 +268,13 @@ void mpi_init(int *argc, char ***argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
 
   int reorder = 1;
-  //CS: in y-Richtung wird nicht geschnitten
+  //CS: in z-Richtung wird nicht geschnitten
   //communication time muesste gering werden/ bei 8 CPUs auf ungefaehr 70 zurueck
-  //node_grid[2] = 1;
+  node_grid[2] = 1;
   MPI_Dims_create(n_nodes, 3, node_grid);
-  printf("node_grid %d", node_grid[0]);
-  printf("node_grid %d", node_grid[1]);
-  printf("node_grid %d", node_grid[2]);
+  printf("node_grid %d\n", node_grid[0]);
+  printf("node_grid %d\n", node_grid[1]);
+  printf("node_grid %d\n", node_grid[2]);
   mpi_reshape_communicator({node_grid[0], node_grid[1], node_grid[2]},
                            /* periodicity */ {1, 1, 1});
 

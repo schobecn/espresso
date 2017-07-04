@@ -60,7 +60,7 @@
 #include "statistics_correlation.hpp"
 #include "lb-boundaries.hpp"
 #include "ghmc.hpp"
-#include "domain_decomposition.hpp"
+//#include "domain_decomposition.hpp"
 #include "p3m_gpu.hpp"
 #include "external_potential.hpp"
 #include "cuda_init.hpp"
