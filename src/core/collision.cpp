@@ -804,7 +804,7 @@ void handle_collisions ()
     }
       } // Loop over all collisions in the queue
     } // are we in one of the vs_based methods
-    printf("Node %d: end of vs based methods\n");
+  printf("Node %d: end of vs based methods\n", this_node);
 #endif //defined VIRTUAL_SITES_RELATIVE
   
 
