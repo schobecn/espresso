@@ -266,7 +266,9 @@ void mpi_init(int *argc, char ***argv) {
   int reorder = 1;
 
   MPI_Dims_create(n_nodes, 3, node_grid);
-
+  printf("node_grid %d\n", node_grid[0]);
+  printf("node_grid %d\n", node_grid[1]);
+  printf("node_grid %d\n", node_grid[2]);
   mpi_reshape_communicator({node_grid[0], node_grid[1], node_grid[2]},
                            /* periodicity */ {1, 1, 1});
 

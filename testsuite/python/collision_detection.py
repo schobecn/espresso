@@ -54,107 +54,166 @@ class CollisionDetection(ut.TestCase):
         self.s.collision_detection.set_params(mode=CollisionMode.off)
         self.assertEquals(self.s.collision_detection.mode,CollisionMode.off)
 
-    def test_bind_centers(self):
-        # Check that it leaves particles alone, wehn off
-        self.s.collision_detection.set_params(mode=CollisionMode.off)
+    # def test_bind_centers(self):
+    #     # Check that it leaves particles alone, wehn off
+    #     self.s.collision_detection.set_params(mode=CollisionMode.off)
         
-        self.s.part.clear()
-        self.s.part.add(pos=(0,0,0),id=0)
-        self.s.part.add(pos=(0.1,0,0),id=1)
-        self.s.part.add(pos=(0.1,0.3,0),id=2)
-        self.s.integrator.run(0)
-        self.assertEqual(self.s.part[0].bonds,())
-        self.assertEqual(self.s.part[1].bonds,())
-        self.assertEqual(self.s.part[2].bonds,())
+    #     self.s.part.clear()
+    #     self.s.part.add(pos=(0,0,0),id=0)
+    #     self.s.part.add(pos=(0.1,0,0),id=1)
+    #     self.s.part.add(pos=(0.1,0.3,0),id=2)
+    #     self.s.integrator.run(0)
+    #     self.assertEqual(self.s.part[0].bonds,())
+    #     self.assertEqual(self.s.part[1].bonds,())
+    #     self.assertEqual(self.s.part[2].bonds,())
 
-        # Check that it cannot be activated 
-        self.s.collision_detection.set_params(mode=CollisionMode.bind_centers,distance=0.11,bond_centers=self.H)
-        self.s.integrator.run(1,recalc_forces=True)
-        bond0=((self.s.bonded_inter[0],1),)
-        bond1=((self.s.bonded_inter[0],0),)
-        self.assertTrue(self.s.part[0].bonds==bond0 or self.s.part[1].bonds==bond1)
-        self.assertTrue(self.s.part[2].bonds==())
+    #     # Check that it cannot be activated 
+    #     self.s.collision_detection.set_params(mode=CollisionMode.bind_centers,distance=0.11,bond_centers=self.H)
+    #     self.s.integrator.run(1,recalc_forces=True)
+    #     bond0=((self.s.bonded_inter[0],1),)
+    #     bond1=((self.s.bonded_inter[0],0),)
+    #     self.assertTrue(self.s.part[0].bonds==bond0 or self.s.part[1].bonds==bond1)
+    #     self.assertTrue(self.s.part[2].bonds==())
 
-        # Check that no additional bonds appear
-        self.s.integrator.run(1)
-        self.assertTrue(self.s.part[0].bonds==bond0 or self.s.part[1].bonds==bond1)
-        self.assertTrue(self.s.part[2].bonds==())
+    #     # Check that no additional bonds appear
+    #     self.s.integrator.run(1)
+    #     self.assertTrue(self.s.part[0].bonds==bond0 or self.s.part[1].bonds==bond1)
+    #     self.assertTrue(self.s.part[2].bonds==())
 
-
-        # Check turning it off
-        self.s.collision_detection.set_params(mode=CollisionMode.off)
-        self.assertEquals(self.s.collision_detection.mode,CollisionMode.off)
+    #     # Check turning it off
+    #     self.s.collision_detection.set_params(mode=CollisionMode.off)
+    #     self.assertEquals(self.s.collision_detection.mode,CollisionMode.off)
     
     
     def run_test_bind_at_point_of_collision_for_pos(self,pos):
         self.s.part.clear()
+        #node0
         self.s.part.add(pos=pos+(0,0,0),id=0)
         self.s.part.add(pos=pos+(0.1,0,0),id=1)
-        self.s.part.add(pos=pos+(0.1,0.3,0),id=2)
-
+        #between
+        self.s.part.add(pos=pos+(0.45,0,0),id=2)
+        self.s.part.add(pos=pos+(0.55,0,0),id=3)
+        #node1
+        self.s.part.add(pos=pos+(0.75,0,0),id=4)
+        self.s.part.add(pos=pos+(0.85,0,0),id=5)
+        #additional particle wo bond
+        self.s.part.add(pos=pos+(0.8,0.8,0.8),id=6)
         
-        self.s.collision_detection.set_params(mode=CollisionMode.bind_at_point_of_collision,distance=0.11,bond_centers=self.H,bond_vs=self.H2,part_type_vs=1,vs_placement=0.4)
+        self.s.collision_detection.set_params(mode=CollisionMode.bind_at_point_of_collision,distance=0.11,bond_centers=self.H,bond_vs=self.H2,part_type_vs=1,vs_placement=0.5)
         self.s.integrator.run(0,recalc_forces=True)
         self.verify_state_after_bind_at_poc()
-
 
         # Integrate again and check that nothing has changed
         self.s.integrator.run(0,recalc_forces=True)
         self.verify_state_after_bind_at_poc()
 
     def verify_state_after_bind_at_poc(self):
+        # interaction types of [0]=H, [1]=H2
+        # expected: 0-1: H
+        # expected: 2-3: H
+        # expected: 4-5: H
+        # after comma: bond_partner
         bond0=((self.s.bonded_inter[0],1),)
         bond1=((self.s.bonded_inter[0],0),)
-        print(bond0,bond1,self.s.part[0].bonds,self.s.part[1].bonds)
+        bond2=((self.s.bonded_inter[0],3),)
+        bond3=((self.s.bonded_inter[0],2),)
+        bond4=((self.s.bonded_inter[0],5),)
+        bond5=((self.s.bonded_inter[0],4),)
+
+        # interaction of PIDs
         self.assertTrue(self.s.part[0].bonds==bond0 or self.s.part[1].bonds==bond1)
-        self.assertTrue(self.s.part[2].bonds==())
+        self.assertTrue(self.s.part[2].bonds==bond2 or self.s.part[3].bonds==bond3)
+        self.assertTrue(self.s.part[4].bonds==bond4 or self.s.part[5].bonds==bond5)
+        self.assertTrue(self.s.part[6].bonds==())
 
         # Check for presence of vs
-        vs1=self.s.part[3]
-        vs2=self.s.part[4]
+        # PIDs of vs
+        vs1=self.s.part[7]
+        # all properties of vs with pid 6
+        # print("vs1 = ", self.s.part[7])
+        vs2=self.s.part[8]
+        vs3=self.s.part[9]
+        vs4=self.s.part[10]
+        vs5=self.s.part[11]
+        vs6=self.s.part[12]
         # No additional particles?
-        self.assertEquals(self.s.part.highest_particle_id,4)
+        self.assertEquals(self.s.part.highest_particle_id,12)
 
-        # Check for bond betwen vs
-        vs_bond1=((self.s.bonded_inter[1],4),)
-        vs_bond2=((self.s.bonded_inter[1],3),)
+        # Check for bond betwen vs -> H2
+        vs_bond1=((self.s.bonded_inter[1],8),)
+        vs_bond2=((self.s.bonded_inter[1],7),)
+        vs_bond3=((self.s.bonded_inter[1],10),)
+        vs_bond4=((self.s.bonded_inter[1],9),)
+        vs_bond5=((self.s.bonded_inter[1],12),)
+        vs_bond6=((self.s.bonded_inter[1],11),)
         self.assertTrue(vs1.bonds==vs_bond1 or vs2.bonds==vs_bond2)
-
+        self.assertTrue(vs3.bonds==vs_bond3 or vs4.bonds==vs_bond4)
+        self.assertTrue(vs5.bonds==vs_bond5 or vs6.bonds==vs_bond6)
+        
         # Vs properties
+        # virtual particles -> 1
+        # real particles -> 0
         self.assertEquals(vs1.virtual,1)
         self.assertEquals(vs2.virtual,1)
+        self.assertEquals(vs3.virtual,1)
+        self.assertEquals(vs4.virtual,1)
+        self.assertEquals(vs5.virtual,1)
+        self.assertEquals(vs6.virtual,1)
 
-
+        # print("vs1.vs_relativ = ", vs1.vs_relative)
+        # print("vs2.vs_relativ = ", vs2.vs_relative)
+        # print("vs3.vs_relativ = ", vs3.vs_relative)
+        # print("vs4.vs_relativ = ", vs4.vs_relative)
         # vs_relative properties
         seen=[]
-        for p in vs1,vs2:
+        for p in (vs1,vs2,vs3,vs4,vs5,vs6):
           r=p.vs_relative
+          # p.vs._relative -> particle id of real related particle, distance, quaternion
           rel_to=r[0]
+          #print("r[0] = ", r[0])
           dist=r[1]
+
           # Vs is related to one of the particles
-          self.assertTrue(rel_to==0 or rel_to==1)
+          if (p == vs1 or p == vs2):
+              self.assertTrue(rel_to==0 or rel_to==1)
+          if (p == vs3 or p == vs4):
+              self.assertTrue(rel_to==2 or rel_to==3)
+          if (p == vs5 or p == vs6):
+              self.assertTrue(rel_to==4 or rel_to==5)
+
+          
           # The two vs relate to two different particles
           self.assertNotIn(rel_to,seen)
           seen.append(rel_to)
-
+          
           # Check placement
           if rel_to==0:
             dist_centers=self.s.part[1].pos-self.s.part[0].pos
-          else:
+          if rel_to==1:
             dist_centers=self.s.part[0].pos-self.s.part[1].pos
-          print("distance",dist_centers)
+          if rel_to==2:
+              dist_centers=self.s.part[3].pos-self.s.part[2].pos
+          if rel_to==3:
+              dist_centers=self.s.part[2].pos-self.s.part[3].pos
+          if rel_to==4:
+              dist_centers=self.s.part[5].pos-self.s.part[4].pos
+          if rel_to==5:
+              dist_centers=self.s.part[4].pos-self.s.part[5].pos
+          #print("distance = ",dist_centers)
+
           expected_pos=self.s.part[rel_to].pos+self.s.collision_detection.vs_placement *dist_centers
-          print("Pos found vs expected:", p.pos,expected_pos)
+          #print("Pos found vs expected:", p.pos, expected_pos)
           self.assertTrue(np.sqrt(np.sum((p.pos-expected_pos)**2))<=1E-5)
-    
+
+          
     @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"),"VIRTUAL_SITES not compiled in")
     #@ut.skipIf(s.cell_system.get_state()["n_nodes"]>1,"VS based tests only on a single node")
     def test_bind_at_point_of_collision(self):
         self.run_test_bind_at_point_of_collision_for_pos(np.array((0,0,0)))
-        self.run_test_bind_at_point_of_collision_for_pos(np.array((0.45,0,0)))
-        self.run_test_bind_at_point_of_collision_for_pos(np.array((0.55,0,0)))
-
-    #@ut.skipIf(not espressomd.has_features("ANGLE_HARMONIC"),"Tests skipped because ANGLE_HARMONIC not compiled in")
+        #self.run_test_bind_at_point_of_collision_for_pos(np.array((0.45,0,0)))
+        #self.run_test_bind_at_point_of_collision_for_pos(np.array((0.55,0,0)))
+         
+    @ut.skipIf(not espressomd.has_features("ANGLE_HARMONIC"),"Tests skipped because ANGLE_HARMONIC not compiled in")
     def test_angle_harmonic(self):
         # Setup particles
         self.s.part.clear()

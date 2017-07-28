@@ -695,7 +695,7 @@ void three_particle_binding_domain_decomposition()
 // Handle the collisions stored in the queue
 void handle_collisions ()
 {
-
+  
   TRACE(printf("%d: handle_collisions: number of collisions in queue %d\n",this_node,number_of_collisions));  
 
   if (collision_params.exception_on_collision) {
@@ -706,108 +706,108 @@ void handle_collisions ()
     
     
   if (bind_centers()) 
-  {
-    for (int i=0;i<number_of_collisions;i++) {
-      // put the bond to the physical particle; at least one partner always is
-      int primary =collision_queue[i].pp1;
-      int secondary = collision_queue[i].pp2;
-      if (local_particles[collision_queue[i].pp1]->l.ghost) {
-        primary = collision_queue[i].pp2;
-        secondary = collision_queue[i].pp1;
-        TRACE(printf("%d: particle-%d is ghost", this_node, collision_queue[i].pp1));
+    {
+      for (int i=0;i<number_of_collisions;i++) {
+	// put the bond to the physical particle; at least one partner always is
+	int primary =collision_queue[i].pp1;
+	int secondary = collision_queue[i].pp2;
+	if (local_particles[collision_queue[i].pp1]->l.ghost) {
+	  primary = collision_queue[i].pp2;
+	  secondary = collision_queue[i].pp1;
+	  TRACE(printf("%d: particle-%d is ghost", this_node, collision_queue[i].pp1));
+	}
+	int bondG[2];
+	bondG[0]=collision_params.bond_centers;
+	bondG[1]=secondary;
+	local_change_bond(primary, bondG, 0);
+	TRACE(printf("%d: Adding bond %d->%d\n",this_node, primary,secondary));
       }
-      int bondG[2];
-      bondG[0]=collision_params.bond_centers;
-      bondG[1]=secondary;
-      local_change_bond(primary, bondG, 0);
-      TRACE(printf("%d: Adding bond %d->%d\n",this_node, primary,secondary));
     }
-  }
 
 #ifdef VIRTUAL_SITES_RELATIVE
   if ((collision_params.mode & COLLISION_MODE_VS) || (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
-  // If one of the collision modes is active which places virtual sites, we go over the queue to handle them
-  
-  // Number of vs to create on this node based on length of collision queue
-  int vs_to_be_created;
-  if (collision_params.mode & COLLISION_MODE_VS)
-    vs_to_be_created=2*number_of_collisions;
-  else
-    if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
-      vs_to_be_created=number_of_collisions;
+    // If one of the collision modes is active which places virtual sites, we go over the queue to handle them
+    
+    // Number of vs to create on this node based on length of collision queue
+    int vs_to_be_created;
+    if (collision_params.mode & COLLISION_MODE_VS) {
+      vs_to_be_created=2*number_of_collisions;
+      printf("this_node = %d, number_of_collisions= %d \n", this_node, number_of_collisions);
+    }
     else
-      throw std::runtime_error("Unexpected collision mode");
-  int first_local_pid_to_use;
-  if (this_node==0) {
-    vs_to_be_created+=max_seen_particle+1;
-    first_local_pid_to_use=max_seen_particle+1;
-  }
-  MPI_Exscan(&vs_to_be_created, &first_local_pid_to_use,1,MPI_INT, MPI_SUM,comm_cart);
-  
-  // Communicate highest particle id after vs creation to head node
-  int new_highest_pid;
-  MPI_Reduce(&vs_to_be_created, &new_highest_pid,1,MPI_INT, MPI_SUM,0,comm_cart);
-  new_highest_pid-=1;
-  printf("node: %d, new_highest_pid: %d\n",this_node, new_highest_pid);
-
-  // On the head node, call added_particle, before any particles are created
-  if (this_node==0) {
-    for (int i=max_seen_particle+1;i<=new_highest_pid;i++) {
-      added_particle(i);
-      printf("added_particle(%d)\n",i);
+      if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
+	vs_to_be_created=number_of_collisions;
+      else
+	throw std::runtime_error("Unexpected collision mode");
+    int first_local_pid_to_use;
+    if (this_node==0) {
+      vs_to_be_created+=max_seen_particle+1;
+      first_local_pid_to_use=max_seen_particle+1;
     }
-  }
-
+    MPI_Exscan(&vs_to_be_created, &first_local_pid_to_use,1,MPI_INT, MPI_SUM,comm_cart);
+    // Communicate highest particle id after vs creation to head node
+    int new_highest_pid;
+    MPI_Reduce(&vs_to_be_created, &new_highest_pid,1,MPI_INT, MPI_SUM,0,comm_cart);
+    new_highest_pid-=1;
+    printf("node: %d, new_highest_pid: %d\n",this_node, new_highest_pid);
+    
+    // On the head node, call added_particle, before any particles are created
+    if (this_node==0) {
+      for (int i=max_seen_particle+1;i<=new_highest_pid;i++) {
+	added_particle(i);
+	printf("added_particle(%d)\n",i);
+      }
+    }
+    
+    
+    printf("Node: %d, vs_to_be_created: %d, first_local_pid_to_use: %d\n",this_node, vs_to_be_created,first_local_pid_to_use);
+    
   
-  printf("Node: %d, vs_to_be_created: %d, first_local_pid_to_use: %d\n",this_node, vs_to_be_created,first_local_pid_to_use);
+    
 
-  
-      
-
-   int current_vs_pid=first_local_pid_to_use;
+    int current_vs_pid=first_local_pid_to_use;
     for (int i=0;i<number_of_collisions;i++) {
-	// Create virtual site(s) 
-  const int primary=collision_queue[i].pp1;
-  const int secondary=collision_queue[i].pp2;
-  const Particle* const p1=local_particles[primary];
-  const Particle* const p2=local_particles[secondary];
-  
-  // Calculate initial position for new vs, which is in the local node's domain
-  // Vs is moved afterwards and resorted after all collision s are handled
-  // Use position of non-ghost colliding particle.
-
-  double initial_pos[3];
-  if (p1->l.ghost)
-    memmove(initial_pos,p2->r.p,3*sizeof(double));
-  else
-    memmove(initial_pos,p1->r.p,3*sizeof(double));
-	
-	// If we are in the two vs mode
-	// Virtual site related to first particle in the collision
-	if (collision_params.mode & COLLISION_MODE_VS)
+      // Create virtual site(s) 
+      const int primary=collision_queue[i].pp1;
+      const int secondary=collision_queue[i].pp2;
+      const Particle* const p1=local_particles[primary];
+      const Particle* const p2=local_particles[secondary];
+      
+      // Calculate initial position for new vs, which is in the local node's domain
+      // Vs is moved afterwards and resorted after all collision s are handled
+      // Use position of non-ghost colliding particle.
+      
+      double initial_pos[3];
+      if (p1->l.ghost)
+	memmove(initial_pos,p2->r.p,3*sizeof(double));
+      else
+	memmove(initial_pos,p1->r.p,3*sizeof(double));
+      
+      // If we are in the two vs mode
+      // Virtual site related to first particle in the collision
+      if (collision_params.mode & COLLISION_MODE_VS)
 	{
-   double pos1[3],pos2[3];
-
-   bind_at_point_of_collision_calc_vs_pos(p1,p2,pos1,pos2);
-	 place_vs_and_relate_to_particle(current_vs_pid,pos1,primary,initial_pos);
-   current_vs_pid++;
-	 place_vs_and_relate_to_particle(current_vs_pid,pos2,secondary,initial_pos);
-   current_vs_pid++;
-   bind_at_poc_create_bond_between_vs(current_vs_pid,i);
+	  double pos1[3],pos2[3];
+	  
+	  bind_at_point_of_collision_calc_vs_pos(p1,p2,pos1,pos2);
+	  place_vs_and_relate_to_particle(current_vs_pid,pos1,primary,initial_pos);
+	  current_vs_pid++;
+	  place_vs_and_relate_to_particle(current_vs_pid,pos2,secondary,initial_pos);
+	  current_vs_pid++;
+	  bind_at_poc_create_bond_between_vs(current_vs_pid,i);
 	}
-	if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
-      double pos[3];
-      const int pid=glue_to_surface_calc_vs_pos(p1,p2,pos);
-      place_vs_and_relate_to_particle(current_vs_pid,pos,pid,initial_pos);
-      current_vs_pid++;
-      glue_to_surface_bind_vs_to_pp1(current_vs_pid,i);
-    }
-      } // Loop over all collisions in the queue
-    } // are we in one of the vs_based methods
+      if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
+	double pos[3];
+	const int pid=glue_to_surface_calc_vs_pos(p1,p2,pos);
+	place_vs_and_relate_to_particle(current_vs_pid,pos,pid,initial_pos);
+	current_vs_pid++;
+	glue_to_surface_bind_vs_to_pp1(current_vs_pid,i);
+      }
+    } // Loop over all collisions in the queue
+  } // are we in one of the vs_based methods
   printf("Node %d: end of vs based methods\n", this_node);
 #endif //defined VIRTUAL_SITES_RELATIVE
   
-
   // three-particle-binding part
 
 
