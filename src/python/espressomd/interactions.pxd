@@ -62,6 +62,9 @@ cdef extern from "interaction_data.hpp":
         double GB_mu
         double GB_nu
 
+        double Hertzian_eps
+        double Hertzian_sig
+
     cdef ia_parameters * get_ia_param(int i, int j)
     cdef ia_parameters * get_ia_param_safe(int i, int j)
     cdef void make_bond_type_exist(int type)
@@ -71,6 +74,10 @@ cdef extern from "lj.hpp":
                                       double eps, double sig, double cut,
                                       double shift, double offset,
                                       double cap_radius, double min)
+
+cdef extern from "hertzian.hpp":
+    cdef int hertzian_set_params(int part_type_a, int part_type_b,
+                                 double eps, double sig)
 
 IF GAY_BERNE:
     cdef extern from "gb.hpp":

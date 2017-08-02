@@ -266,6 +266,79 @@ IF LENNARD_JONES == 1:
 
 # Lennard Jones
 
+# ToDo: change to Hertzian, up to now only copy&paste from LJ
+IF HERTZIAN == 1:
+    cdef class HertzianInteraction(NonBondedInteraction):
+        def validate_params(self):
+            if self._params["epsilon"] < 0:
+                raise ValueError("Hertzian eps has to be >=0")
+            if self._params["sigma"] < 0:
+                raise ValueError("Hertzian sigma has to be >=0")
+            # if self._params["cutoff"] < 0:
+            #     raise ValueError("Lennard-Jones cutoff has to be >=0")
+            return True
+
+        def _get_params_from_es_core(self):
+            cdef ia_parameters * ia_params
+            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            return {
+                "epsilon": ia_params.Hertzian_eps,
+                "sigma": ia_params.Hertzian_sig}
+        #         # "cutoff": ia_params.LJ_cut,
+        #         # "shift": ia_params.LJ_shift,
+        #         # "offset": ia_params.LJ_offset,
+        #         # "cap": ia_params.LJ_capradius,
+        #         # "min": ia_params.LJ_min}
+
+        def is_active(self):
+            return (self._params["epsilon"] > 0)
+
+        def set_params(self, **kwargs):
+            """ Set parameters for the Hertzian interaction.
+
+            Parameters
+            ----------
+
+            epsilon : float
+                      The magnitude of the interaction.
+            sigma : float
+                    Determines the interaction length scale.
+            # cutoff : float
+            #          Cutoff distance of the interaction.
+            # shift : float, string
+            #         Constant shift of the potential. (4*epsilon*shift).
+            # offset : float, optional
+            #          Offset distance of the interaction.
+            # cap : float, optional
+            #       If individual force caps are used, determines the distance
+            #       at which the force is capped.
+            # min : float, optional
+            #       Restricts the interaction to a minimal distance.
+            """
+            super(HertzianInteraction, self).set_params(**kwargs)
+
+        def _set_params_in_es_core(self):
+            if hertzian_set_params(self._part_types[0], self._part_types[1],
+                                        self._params["epsilon"],
+                                        self._params["sigma"]):
+                raise Exception("Could not set Hertzian parameters")
+
+        def default_params(self):
+            return {
+                "epsilon": 0.,
+                "sigma": 0.}
+
+        def type_name(self):
+            return "Hertzian"
+
+        def valid_keys(self):
+            return "epsilon", "sigma"
+
+        def required_keys(self):
+            return "epsilon", "sigma"
+
+# Hertzian
+
 IF GAY_BERNE:
     cdef class GayBerneInteraction(NonBondedInteraction):
 
@@ -483,6 +556,7 @@ class NonBondedInteractionHandle(object):
     generic_lennard_jones = None
     tabulated = None
     gay_berne = None
+    hertzian = None
 
     def __init__(self, _type1, _type2):
         """Takes two particle types as argument"""
@@ -501,7 +575,8 @@ class NonBondedInteractionHandle(object):
             self.tabulated = TabulatedNonBonded(_type1, _type2)
         IF GAY_BERNE:
             self.gay_berne = GayBerneInteraction(_type1, _type2)
-
+        IF HERTZIAN:
+            self.hertzian = HertzianInteraction(_type1, _type2)
 
 cdef class NonBondedInteractions(object):
 
