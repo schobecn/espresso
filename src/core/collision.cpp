@@ -315,8 +315,8 @@ void bind_at_point_of_collision_calc_vs_pos(const Particle* const p1, const Part
   double vec21[3];
   get_mi_vector(vec21,p1->r.p,p2->r.p);
   for (int i=0;i<3;i++) {
-    pos1[i] = p1->r.p[i] - vec21[i] * collision_params.vs_placement;
-    pos2[i] = p1->r.p[i] - vec21[i] * (1.-collision_params.vs_placement);
+    pos1[i] = p1->r.p[i] - vec21[i] * collision_params.rel_vs_placement;
+    pos2[i] = p1->r.p[i] - vec21[i] * (1.-collision_params.rel_vs_placement);
   }
 }
 
@@ -826,6 +826,9 @@ void handle_collisions ()
 	  {
 	    // glue_to_surface_bind_vs_to_pp1(i);
 
+	    double pos[3];
+	    const int pid=glue_to_surface_calc_vs_pos(p1,p2,pos);
+	    
 	    place_vs_and_relate_to_particle(current_vs_pid,pos,pid,initial_pos);
 	    current_vs_pid++;
 	    glue_to_surface_bind_vs_to_pp1(current_vs_pid,i);
