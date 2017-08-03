@@ -310,6 +310,16 @@ void detect_collision(Particle* p1, Particle* p2)
 }
 
 
+// CS change
+void bind_at_point_of_collision_calc_vs_pos(const Particle* const p1, const Particle* const p2, double pos1[3],double pos2[3]) {
+  double vec21[3];
+  get_mi_vector(vec21,p1->r.p,p2->r.p);
+  for (int i=0;i<3;i++) {
+    pos1[i] = p1->r.p[i] - vec21[i] * collision_params.vs_placement;
+    pos2[i] = p1->r.p[i] - vec21[i] * (1.-collision_params.vs_placement);
+  }
+}
+
 
 // Considers three particles for three_particle_binding and performs
 // the binding if the criteria are met //
