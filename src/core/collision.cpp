@@ -864,7 +864,7 @@ void handle_collisions ()
     if (number_of_collisions >0)
     {
       //announce_resort_particles();
-      on_particle_change()
+      on_particle_change();
     }
     announce_resort_particles();
   }
