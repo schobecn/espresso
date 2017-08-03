@@ -749,37 +749,46 @@ void handle_collisions ()
     
     
     int current_vs_pid=first_local_pid_to_use;
-    
-    // CS change
+
+    // CS change: from rudolf/py_collision_detection_parallel but not in initial commit
     for (int i=0;i<number_of_collisions;i++) {
-      // Create virtual site(s) 
+      // Create virtual site(s)
+      const int primary=collision_queue[i].pp1;
+      const int secondary=collision_queue[i].pp2;
+      const Particle* const p1=local_particles[primary];
+      const Particle* const p2=local_particles[secondary];
+    
+      // // Create virtual site(s) 
       
+      // // If we are in the two vs mode
+      // // Virtual site related to first particle in the collision
+      // if (collision_params.mode & COLLISION_MODE_VS)
+      // 	{
+      // 	  // place_vs_and_relate_to_particle(collision_queue[i].point_of_collision,collision_queue[i].pp1);
+      // 	  // Recalculate positiosn of vs for those cases, where two vs
+      // 	  // are not supposed to be calculated at the same location
+      // 	  double vs_pos1[3],vs_pos2[3],vec21[3];
+      // 	  Particle* p1=local_particles[collision_queue[i].pp1],*p2=local_particles[collision_queue[i].pp2];
+      // 	  get_mi_vector(vec21,p1->r.p,p2->r.p);
+      // 	  for (int k=0;k<3;k++){
+      // 	    vs_pos1[k]=p1->r.p[k] -collision_params.rel_vs_placement *vec21[k];
+      // 	    vs_pos2[k]=p1->r.p[k] -(1-collision_params.rel_vs_placement) *vec21[k];
+      // 	  }
+
+
+      // Calculate initial position for new vs, which is in the local node's domain
+      // Vs is moved afterwards and resorted after all collision s are handled
+      // Use position of non-ghost colliding particle.
+      double initial_pos[3];
+      if (p1->l.ghost)
+	memmove(initial_pos,p2->r.p,3*sizeof(double));
+      else
+	memmove(initial_pos,p1->r.p,3*sizeof(double));
+
       // If we are in the two vs mode
       // Virtual site related to first particle in the collision
-      if (collision_params.mode & COLLISION_MODE_VS)
+      if (collision_params.mode & COLLISION_MODE_VS) 
 	{
-	  // place_vs_and_relate_to_particle(collision_queue[i].point_of_collision,collision_queue[i].pp1);
-	  // Recalculate positiosn of vs for those cases, where two vs
-	  // are not supposed to be calculated at the same location
-	  double vs_pos1[3],vs_pos2[3],vec21[3];
-	  Particle* p1=local_particles[collision_queue[i].pp1],*p2=local_particles[collision_queue[i].pp2];
-	  get_mi_vector(vec21,p1->r.p,p2->r.p);
-	  for (int k=0;k<3;k++){
-	    vs_pos1[k]=p1->r.p[k] -collision_params.rel_vs_placement *vec21[k];
-	    vs_pos2[k]=p1->r.p[k] -(1-collision_params.rel_vs_placement) *vec21[k];
-	  }
-
-
-	  // Calculate initial position for new vs, which is in the local node's domain
-	  // Vs is moved afterwards and resorted after all collision s are handled
-	  // Use position of non-ghost colliding particle.
-	  double initial_pos[3];
-	  if (p1->l.ghost)
-	    memmove(initial_pos,p2->r.p,3*sizeof(double));
-	  else
-	    memmove(initial_pos,p1->r.p,3*sizeof(double));
-
-
 	  // place_vs_and_relate_to_particle(vs_pos1,collision_queue[i].pp1);
 	  // place_vs_and_relate_to_particle(vs_pos2,collision_queue[i].pp2);
 	  
@@ -789,13 +798,18 @@ void handle_collisions ()
 
 	  // If we are in the two vs mode, we need a bond between the virtual sites
 	  // bind_at_poc_create_bond_between_vs(i);
+
+	  // CS change: from rudolf/py_collision_detection_parallel but not in initial commit
+	  double pos1[3],pos2[3];
+	  bind_at_point_of_collision_calc_vs_pos(p1,p2,pos1,pos2);
+	  
 	  place_vs_and_relate_to_particle(current_vs_pid,pos1,primary,initial_pos);
 	  current_vs_pid++;
 	  place_vs_and_relate_to_particle(current_vs_pid,pos2,secondary,initial_pos);
 	  current_vs_pid++;
 	  bind_at_poc_create_bond_between_vs(current_vs_pid,i);
 	}
-
+      
       else {
 	// If we are in the "glue to surface mode", we need a bond between p1 and the vs
 	if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
