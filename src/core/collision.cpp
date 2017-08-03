@@ -710,7 +710,7 @@ void handle_collisions ()
       // place_vs_and_relate_to_particle(collision_queue[i].point_of_collision,collision_queue[i].pp2);
 
       else {
-	if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURFACE ) {
+	if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF ) {
 	  place_vs_and_relate_to_particle(collision_queue[i].point_of_collision,collision_queue[i].pp2);
 	}
       }
