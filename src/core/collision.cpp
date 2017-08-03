@@ -697,7 +697,7 @@ void handle_collisions ()
 	  double vs_pos1[3],vs_pos2[3],vec21[3];
 	  Particle* p1=local_particles[collision_queue[i].pp1],*p2=local_particles[collision_queue[i].pp2];
 	  get_mi_vector(vec21,p1->r.p,p2->r.p);
-	  double d=sqrt(SQRLEN(vec21));
+	  //double d=sqrt(SQRLEN(vec21));
 	  for (int k=0;k<3;k++){
 	    vs_pos1[k]=p1->r.p[k] -collision_params.rel_vs_placement *vec21[k];
 	    vs_pos2[k]=p1->r.p[k] -(1-collision_params.rel_vs_placement) *vec21[k];
