@@ -55,7 +55,7 @@ static int number_of_collisions, total_collisions;
 /// Parameters for collision detection
 Collision_parameters collision_params = { 0, };
 
-int collision_detection_set_params(int mode, double d, int bond_centers, int bond_vs,int t,int d2, int tg, int tv, int ta, int bond_three_particles, int angle_resolution)
+int collision_detection_set_params(int mode, double d, int bond_centers, int bond_vs,int t,int d2, int tg, int tv, int ta, int bond_three_particles, int angle_resolution, double rel_vs_placement)
 {
   // The collision modes involving virutal istes also requires the creation of a bond between the colliding 
   // particles, hence, we turn that on.
@@ -117,7 +117,8 @@ int collision_detection_set_params(int mode, double d, int bond_centers, int bon
   collision_params.part_type_after_glueing =ta;
   collision_params.bond_three_particles=bond_three_particles;
   collision_params.three_particle_angle_resolution=angle_resolution;
-
+  collision_params.rel_vs_placement=rel_vs_placement;
+  
   if (mode & COLLISION_MODE_VS)
     make_particle_type_exist(t);
   
@@ -683,30 +684,50 @@ void handle_collisions ()
   // If one of the collision modes is active which places virtual sites, we go over the queue to handle them
   if ((collision_params.mode & COLLISION_MODE_VS) || (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
     for (int i=0;i<number_of_collisions;i++) {
-	// Create virtual site(s) 
-	
-	// If we are in the two vs mode
-	// Virtual site related to first particle in the collision
-	if (collision_params.mode & COLLISION_MODE_VS)
+      // Create virtual site(s) 
+      
+      // If we are in the two vs mode
+      // Virtual site related to first particle in the collision
+      if (collision_params.mode & COLLISION_MODE_VS)
 	{
-	 place_vs_and_relate_to_particle(collision_queue[i].point_of_collision,collision_queue[i].pp1);
+	  // place_vs_and_relate_to_particle(collision_queue[i].point_of_collision,collision_queue[i].pp1);
+
+	  // Recalculate positiosn of vs for those cases, where two vs
+	  // are not supposed to be calculated at the same location
+	  double vs_pos1[3],vs_pos2[3],vec21;
+	  Particle* p1=local_particles[collision_queue[i].pp1],p2=local_particles[collision_queue[i].pp2];
+	  get_mi_vector(vec21,p1->r.p,p2->r.p);
+	  double d=sqrt(SQRLEN(vec21));
+	  for (int k=0;k<3;k++){
+	    vs_pos1[k]=p1->r.p[k] -collision_params.rel_vs_placement *vec21[k];
+	    vs_pos2[k]=p1->r.p[k] -(1-collision_params.rel_vs_placement) *vec21[k];
+	  }
+	  place_vs_and_relate_to_particle(vs_pos1,collision_queue[i].pp1);
+	  place_vs_and_relate_to_particle(vs_pos2,collision_queue[i].pp2);
 	}
-	// The virtual site related to p2 is needed independently on which of the vs-related modes is active
-        place_vs_and_relate_to_particle(collision_queue[i].point_of_collision,collision_queue[i].pp2);
-  
-	// If we are in the two vs mode, we need a bond between the virtual sites
-	if (collision_params.mode & COLLISION_MODE_VS)
+      
+      // // The virtual site related to p2 is needed independently on which of the vs-related modes is active
+      // place_vs_and_relate_to_particle(collision_queue[i].point_of_collision,collision_queue[i].pp2);
+
+      else {
+	if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURFACE ) {
+	  place_vs_and_relate_to_particle(collision_queue[i].point_of_collision,collision_queue[i].pp2);
+	}
+      }
+      
+      // If we are in the two vs mode, we need a bond between the virtual sites
+      if (collision_params.mode & COLLISION_MODE_VS)
 	{
           bind_at_poc_create_bond_between_vs(i);
         }
-	
-	// If we are in the "glue to surface mode", we need a bond between p1 and the vs
-	if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
+      
+      // If we are in the "glue to surface mode", we need a bond between p1 and the vs
+      if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
 	{
-           glue_to_surface_bind_vs_to_pp1(i);
+	  glue_to_surface_bind_vs_to_pp1(i);
         }
-      } // Loop over all collisions in the queue
-    } // are we in one of the vs_based methods
+    } // Loop over all collisions in the queue
+  } // are we in one of the vs_based methods
 #endif //defined VIRTUAL_SITES_RELATIVE
   
 

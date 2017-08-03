@@ -75,6 +75,8 @@ typedef struct {
   /// different angle bonds with different equilibrium angles
   /// Are expected to have ids immediately following to bond_three_particles
   int three_particle_angle_resolution;
+  // BIND_AT_POC: relative position of vs. 0.5=in the middle between 2 particles
+  double rel_vs_placement;
 } Collision_parameters;
 
 /// Parameters for collision detection
@@ -103,8 +105,9 @@ void handle_collisions();
     @param tv for the "glue to surface" is the type of the particle to which the virtual site is attached
     @param bond_three_particles is the three-particle-bond parameter
     @param angle_resolution is the three_particle_angle_resolution parameter in order to define different angle bonds
+    @oaram rel_vs_placement: Placement of vs for bind_at_point_of_collision. 0.5=half way in between them.
  */
-int collision_detection_set_params(int mode, double d, int bond_centers, int bond_vs,int t,int d2, int tg, int tv, int ta, int bond_three_particles, int angle_resolution);
+int collision_detection_set_params(int mode, double d, int bond_centers, int bond_vs,int t,int d2, int tg, int tv, int ta, int bond_three_particles, int angle_resolution, double rel_vs_placement);
 
 #endif
 
