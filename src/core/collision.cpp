@@ -206,7 +206,8 @@ void detect_collision(Particle* p1, Particle* p2)
   // Obtain distance between particles
   double dist_betw_part = sqrt(distance2vec(p1->r.p, p2->r.p, vec21));
   //TRACE(printf("%d: Distance between particles %lf %lf %lf, Scalar: %f\n",this_node,vec21[0],vec21[1],vec21[2], dist_betw_part));
-  if (dist_betw_part > collision_params.distance)
+  // if (dist_betw_part > collision_params.distance)
+  if (dist_betw_part > get_ia_param(p1->p.type,p2->p.type)->Hertzian_sig)
     return;
 
   //TRACE(printf("%d: particles %d and %d within bonding distance %lf\n", this_node, p1->p.identity, p2->p.identity, dist_betw_part));
@@ -759,8 +760,10 @@ void handle_collisions ()
     
     // Number of vs to create on this node based on length of collision queue
     int vs_to_be_created;
-    if (collision_params.mode & COLLISION_MODE_VS)
+    if (collision_params.mode & COLLISION_MODE_VS) {
+      printf("number_of_collisions on node %d: %d\n", this_node, number_of_collisions);
       vs_to_be_created=2*number_of_collisions;
+    }
     else
       if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
 	vs_to_be_created=number_of_collisions;
