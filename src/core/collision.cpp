@@ -23,7 +23,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "domain_decomposition.hpp"
-
+#include "particle_data.hpp"
 
 using namespace std;
 
