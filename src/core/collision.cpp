@@ -695,7 +695,7 @@ void handle_collisions ()
 	  // Recalculate positiosn of vs for those cases, where two vs
 	  // are not supposed to be calculated at the same location
 	  double vs_pos1[3],vs_pos2[3],vec21;
-	  Particle* p1=local_particles[collision_queue[i].pp1],p2=local_particles[collision_queue[i].pp2];
+	  Particle* p1=local_particles[collision_queue[i].pp1],*p2=local_particles[collision_queue[i].pp2];
 	  get_mi_vector(vec21,p1->r.p,p2->r.p);
 	  double d=sqrt(SQRLEN(vec21));
 	  for (int k=0;k<3;k++){
