@@ -309,6 +309,39 @@ void detect_collision(Particle* p1, Particle* p2)
   }
 }
 
+// CS change
+/** @brief Calculate position of vs for GLUE_TO_SURFACE mode 
+ *    Reutnrs id of particle to bind vs to */
+int glue_to_surface_calc_vs_pos(const Particle* const p1, const Particle* const p2, double pos[3])
+{
+  int bind_vs_to_pid;
+  double vec21[3];
+  double c;
+  get_mi_vector(vec21,p1->r.p,p2->r.p);
+  const double dist_betw_part=sqrt(sqrlen(vec21));
+
+  // Find out, which is the particle to be glued.
+  if ((p1->p.type==collision_params.part_type_to_be_glued)
+      && (p2->p.type ==collision_params.part_type_to_attach_vs_to))
+    {
+      c = collision_params.dist_glued_part_to_vs/dist_betw_part;
+      bind_vs_to_pid=p2->p.identity;
+    }
+  else if ((p2->p.type==collision_params.part_type_to_be_glued)
+	   && (p1->p.type ==collision_params.part_type_to_attach_vs_to))
+    {
+      c = -collision_params.dist_glued_part_to_vs/dist_betw_part;
+      bind_vs_to_pid=p1->p.identity;
+    }
+  else
+    {
+      throw std::runtime_error("This should never be thrown. Bug.");
+    }
+  for (int i=0;i<3;i++) {
+    pos[i] = p1->r.p[i] - vec21[i] * c;
+  }
+  return bind_vs_to_pid;
+}
 
 // CS change
 void bind_at_point_of_collision_calc_vs_pos(const Particle* const p1, const Particle* const p2, double pos1[3],double pos2[3]) {
@@ -748,7 +781,7 @@ void handle_collisions ()
     
     // On the head node, call added_particle, before any particles are created
     if (this_node==0) {
-      for (int i=max_seen_particle+1;i<=new_highest_pid-max_seen_particle-1;i++) {
+      for (int i=max_seen_particle+1;i<=new_highest_pid;i++) {
 	added_particle(i);
 	printf("added_particle(%d)\n",i);
       }
