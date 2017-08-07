@@ -1633,16 +1633,23 @@ void mpi_get_particles(Particle *result, IntList *bi) {
   Cell *cell;
   int c;
 
+  printf("n_part = %d, tot_size = %d\n", n_part, tot_size);
+
   mpi_call(mpi_get_particles_slave, -1, bi != NULL);
+  printf("n_part = %d, tot_size = %d\n", n_part, tot_size);
 
   sizes = (int *)Utils::malloc(sizeof(int) * n_nodes);
   local_part = cells_get_n_particles();
+  printf("n_part = %d, tot_size = %d\n", n_part, tot_size);
 
   /* first collect number of particles on each node */
   MPI_Gather(&local_part, 1, MPI_INT, sizes, 1, MPI_INT, 0, comm_cart);
   tot_size = 0;
+  printf("n_part = %d, tot_size = %d\n", n_part, tot_size);
+
   for (i = 0; i < n_nodes; i++)
     tot_size += sizes[i];
+  printf("n_part = %d, tot_size = %d\n", n_part, tot_size);
 
   if (tot_size != n_part) {
     fprintf(stderr, "%d: ERROR: mpi_get_particles: n_part %d, but I counted "

@@ -500,7 +500,6 @@ void handle_exception_throwing_for_single_collision(int i)
 // CS change
 void place_vs_and_relate_to_particle(const int current_vs_pid, const double* pos, const int relate_to, const double* initial_pos)
 {
- 
   // place_particle(max_seen_particle+1,pos);
   // vs_relate_to(max_seen_particle,relate_to);
 
@@ -508,11 +507,13 @@ void place_vs_and_relate_to_particle(const int current_vs_pid, const double* pos
   // node's domain. It will then be moved to its final position.
   // A resort occurs after vs-based collisions anyway, which will move the vs into the right cell.
 
+  // hier gehts schief.. bei added_particle(current_vs_pid)
   added_particle(current_vs_pid);
+  printf("addedD_particle(%d)\n",current_vs_pid);
+
   local_place_particle(current_vs_pid,initial_pos,1);
   memmove(local_particles[current_vs_pid]->r.p,pos,3*sizeof(double));
   local_vs_relate_to(current_vs_pid,relate_to);
-
   
   //(local_particles[max_seen_particle])->p.isVirtual=1;
   (local_particles[current_vs_pid])->p.isVirtual=1;
@@ -747,7 +748,6 @@ void three_particle_binding_domain_decomposition()
 // Handle the collisions stored in the queue
 void handle_collisions ()
 {
-
   TRACE(printf("%d: handle_collisions: number of collisions in queue %d\n",this_node,number_of_collisions));  
 
   if (collision_params.mode & COLLISION_MODE_EXCEPTION)
@@ -774,10 +774,10 @@ void handle_collisions ()
       TRACE(printf("%d: Adding bond %d->%d\n",this_node, primary,secondary));
     }
   }
-
+  
 #ifdef VIRTUAL_SITES_RELATIVE
   if ((collision_params.mode & COLLISION_MODE_VS) || (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
-
+    
     // If one of the collision modes is active which places virtual sites, we go over the queue to handle them
     
     // Number of vs to create on this node based on length of collision queue
@@ -796,22 +796,22 @@ void handle_collisions ()
       vs_to_be_created+=max_seen_particle+1;
       first_local_pid_to_use=max_seen_particle+1;
     }
+
     MPI_Exscan(&vs_to_be_created, &first_local_pid_to_use,1,MPI_INT, MPI_SUM,comm_cart);
-    
+
     // Communicate highest particle id after vs creation to head node
     int new_highest_pid;
     MPI_Reduce(&vs_to_be_created, &new_highest_pid,1,MPI_INT, MPI_SUM,0,comm_cart);
     new_highest_pid-=1;
     // printf("node: %d, new_highest_pid: %d\n",this_node, new_highest_pid);
-    
+
     // On the head node, call added_particle, before any particles are created
     if (this_node==0) {
       for (int i=max_seen_particle+1;i<=new_highest_pid;i++) {
 	added_particle(i);
-	// printf("added_particle(%d)\n",i);
+	printf("added_particle(%d)\n",i);
       }
     }
-    
     
     // printf("Node: %d, vs_to_be_created: %d, first_local_pid_to_use: %d\n",this_node, vs_to_be_created,first_local_pid_to_use);
     
@@ -867,43 +867,43 @@ void handle_collisions ()
 	  // If we are in the two vs mode, we need a bond between the virtual sites
 	  // bind_at_poc_create_bond_between_vs(i);
 
+	  // printf("hier kommt der Fehler: \n");
 	  // CS change: from rudolf/py_collision_detection_parallel but not in initial commit
 	  double pos1[3],pos2[3];
 	  bind_at_point_of_collision_calc_vs_pos(p1,p2,pos1,pos2);
-	  
+
 	  place_vs_and_relate_to_particle(current_vs_pid,pos1,primary,initial_pos);
 	  current_vs_pid++;
 	  place_vs_and_relate_to_particle(current_vs_pid,pos2,secondary,initial_pos);
 	  current_vs_pid++;
 	  bind_at_poc_create_bond_between_vs(current_vs_pid,i);
-	}
-      
-      else {
-	// If we are in the "glue to surface mode", we need a bond between p1 and the vs
-	if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
-	  {
-	    // glue_to_surface_bind_vs_to_pp1(i);
+	  // printf("hier muss n_part = 4 sein: n_part = %d \n", n_part);
 
-	    double pos[3];
-	    const int pid=glue_to_surface_calc_vs_pos(p1,p2,pos);
+	}
+
+      // If we are in the "glue to surface mode", we need a bond between p1 and the vs
+      if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
+	{
+	  // glue_to_surface_bind_vs_to_pp1(i);
+
+	  double pos[3];
+	  const int pid=glue_to_surface_calc_vs_pos(p1,p2,pos);
 	    
-	    place_vs_and_relate_to_particle(current_vs_pid,pos,pid,initial_pos);
-	    current_vs_pid++;
-	    glue_to_surface_bind_vs_to_pp1(current_vs_pid,i);
-	  }
-      }
+	  place_vs_and_relate_to_particle(current_vs_pid,pos,pid,initial_pos);
+	  current_vs_pid++;
+	  glue_to_surface_bind_vs_to_pp1(current_vs_pid,i);
+	}
     } // Loop over all collisions in the queue
+      
   } // are we in one of the vs_based methods
-  // printf("Node %d: end of vs based methods\n", this_node);
 #endif //defined VIRTUAL_SITES_RELATIVE
   
 
   // three-particle-binding part
 
-
   if (collision_params.mode & (COLLISION_MODE_BIND_THREE_PARTICLES)) {
-  int counts[n_nodes];
-  gather_collision_queue(counts);
+    int counts[n_nodes];
+    gather_collision_queue(counts);
 
     if (counts[this_node]>0) {
 
@@ -911,42 +911,41 @@ void handle_collisions ()
       // particles in the system. (slow)
       if (cell_structure.type!=CELL_STRUCTURE_DOMDEC) {
         three_particle_binding_full_search();
-    } // if cell structure != domain decomposition
-    else
-    {
-      three_particle_binding_domain_decomposition();
-    } // If we have doamin decomposition
+      } // if cell structure != domain decomposition
+      else
+	{
+	  three_particle_binding_domain_decomposition();
+	} // If we have doamin decomposition
 
-   } // if number of collisions of this node > 0
+    } // if number of collisions of this node > 0
        
-       if (total_collisions>0)
-         free(gathered_queue);
-       total_collisions = 0;
- } // if TPB
+    if (total_collisions>0)
+      free(gathered_queue);
+    total_collisions = 0;
+  } // if TPB
 
   // If a collision method is active which places particles, resorting might be needed
   TRACE(printf("%d: Resort particles is %d\n",this_node,resort_particles));
   if (collision_params.mode & (COLLISION_MODE_VS | COLLISION_MODE_GLUE_TO_SURF))
-  {
-    // NOTE!! this has to be changed to total_collisions, once parallelization
-    // is implemented
-
-    // CS change
-    if (number_of_collisions >0)
     {
-      //announce_resort_particles();
-      on_particle_change();
+      // NOTE!! this has to be changed to total_collisions, once parallelization
+      // is implemented
+
+      // CS change
+      if (number_of_collisions >0)
+	{
+	  //announce_resort_particles();
+	  on_particle_change();
+	}
+
+      announce_resort_particles();
     }
-    announce_resort_particles();
-  }
-  
   
   // Reset the collision queue
   if (number_of_collisions>0)
     free(collision_queue);
   
   number_of_collisions = 0;
-
 
 }
 

@@ -106,6 +106,7 @@ void init_particle(Particle *part)
   part->p.identity = -1;
   part->p.type     = 0;
   part->p.mol_id   = -1;
+  // part->p.mol_id   = 0;
 
 #ifdef MASS
   part->p.mass     = 1.0;
