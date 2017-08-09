@@ -524,7 +524,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid, const double* pos
 
   // (local_particles[max_seen_particle])->p.type=collision_params.vs_particle_type;
   (local_particles[current_vs_pid])->p.type=collision_params.vs_particle_type;
-  on_particle_change();
+  //on_particle_change();
 }
 
 // CS change
@@ -932,13 +932,16 @@ void handle_collisions ()
       // is implemented
 
       // CS change
-      if (number_of_collisions >0)
+      int total_collisions;
+      // printf("number_of_collision: %d\n", number_of_collisions);
+      MPI_Allreduce(&number_of_collisions, &total_collisions, 1, MPI_INT, MPI_SUM, comm_cart);
+      // printf("total_collisions: %d\n", total_collisions);
+      if (total_collisions >0)
 	{
 	  //announce_resort_particles();
 	  on_particle_change();
+	  announce_resort_particles();	
 	}
-
-      announce_resort_particles();
     }
   
   // Reset the collision queue

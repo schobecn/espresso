@@ -432,7 +432,7 @@ IF ELECTROSTATICS and CUDA and EWALD_GPU:
             self._set_params_in_es_core()
 
 IF ELECTROSTATICS:
-    cdef class MMM1D(electrostatics.ElectrostaticInteraction):
+    cdef class MMM1D(ElectrostaticInteraction):
 
         def validate_params(self):
             default_params = self.default_params()

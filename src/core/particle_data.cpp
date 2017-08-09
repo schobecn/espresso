@@ -1419,9 +1419,8 @@ void added_particle(int part)
 {
   int i;
 
-  n_part++;
-
   if (part > max_seen_particle) {
+    n_part++;
     realloc_local_particles(part);
     /* fill up possible gap. Part itself is ESSENTIAL!!!  */
     for (i = max_seen_particle + 1; i <= part; i++)
