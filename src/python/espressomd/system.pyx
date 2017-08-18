@@ -66,29 +66,6 @@ cdef class System(object):
               indentation level, either as method, property or reference.
 
     """
-# <<<<<<< HEAD:src/python/espressomd/_system.pyx
-#     part = particle_data.ParticleList()
-#     non_bonded_inter = interactions.NonBondedInteractions()
-#     bonded_inter = interactions.BondedInteractions()
-#     cell_system = CellSystem()
-#     thermostat = Thermostat()
-#     minimize_energy = MinimizeEnergy()
-#     actors = None
-#     analysis = None
-#     galilei = GalileiTransform()
-#     integrator = integrate.Integrator()
-#     if CONSTRAINTS == 1:
-#         constraints = Constraints()
-#     if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
-#         lbboundaries = LBBoundaries()
-#     ekboundaries = EKBoundaries()
-
-#     IF COLLISION_DETECTION==1:
-#         collision_detection=CollisionDetection(mode=CollisionMode.off)
-
-#     auto_update_observables = AutoUpdateObservables()
-#     auto_update_correlators = AutoUpdateCorrelators()
-# =======
     cdef public:
         part
         non_bonded_inter
@@ -106,7 +83,6 @@ cdef class System(object):
         lbboundaries
         ekboundaries
         __seed
-# >>>>>>> 8d71d1ff0c6c469b39f4386b1acd914d524ecf93:src/python/espressomd/system.pyx
 
 
     def __init__(self):
