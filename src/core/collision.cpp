@@ -249,7 +249,7 @@ inline bool glue_to_surface_criterion(const Particle* const p1, const Particle* 
 
 // Detect a collision between the given particles.
 // Add it to the queue in case virtual sites should be added at the point of collision
-void detect_collision(const Particle* const p1, const Particle* const p2, const double& dist_betw_part)
+void detect_collision(Particle* p1, Particle* p2, const double& dist_betw_part)
 {
 
   //if (dist_betw_part > collision_params.distance)
@@ -294,6 +294,26 @@ void detect_collision(const Particle* const p1, const Particle* const p2, const 
   }
   queue_collision(p1->p.identity,p2->p.identity);
 
+  // for particles which are fixed
+  // ToDo: abhaengig von flag (fix) statt particle type
+  if (p1->p.ext_flag != 0 || p2->p.ext_flag != 0) {
+    p1->m.v[0] = 0;
+    p2->m.v[0] = 0;
+    p1->m.v[1] = 0;
+    p2->m.v[1] = 0;
+    p1->m.v[2] = 0;
+    p2->m.v[2] = 0;
+  }
+  
+
+  // conserve momentum when particles collide
+
+  p1->m.v[0] = (p1->p.mass * p1->m.v[0] + p2->p.mass * p2->m.v[0]) / (p1->p.mass + p2->p.mass);
+  p2->m.v[0] = p1->m.v[0];
+  p1->m.v[1] = (p1->p.mass * p1->m.v[1] + p2->p.mass * p2->m.v[1]) / (p1->p.mass + p2->p.mass);
+  p2->m.v[1] = p1->m.v[1];
+  p1->m.v[2] = (p1->p.mass * p1->m.v[2] + p2->p.mass * p2->m.v[2]) / (p1->p.mass + p2->p.mass);
+  p2->m.v[2] = p1->m.v[2];
   
 }
 
