@@ -477,7 +477,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid, const double* con
 	    (local_particles[relate_to])->p.rotation=14;
 	  #endif
 	  (local_particles[current_vs_pid])->p.type=collision_params.vs_particle_type;
-    on_particle_change();
+	  // on_particle_change();
 }
 
 
@@ -841,11 +841,14 @@ void handle_collisions ()
     // NOTE!! this has to be changed to total_collisions, once parallelization
     // is implemented
 
-    if (number_of_collisions >0)
+    // if (number_of_collisions >0)
+    int total_collisions;
+    MPI_Allreduce(&number_of_collisions, &total_collisions, 1, MPI_INT, MPI_SUM, comm_cart);
+    if (total_collisions > 0)
     {
       on_particle_change();
+      announce_resort_particles();
     }
-    announce_resort_particles();
   }
   
   // Reset the collision queue
