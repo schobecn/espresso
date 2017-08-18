@@ -252,7 +252,8 @@ inline bool glue_to_surface_criterion(const Particle* const p1, const Particle* 
 void detect_collision(const Particle* const p1, const Particle* const p2, const double& dist_betw_part)
 {
 
-  if (dist_betw_part > collision_params.distance)
+  //if (dist_betw_part > collision_params.distance)
+  if (dist_betw_part > get_ia_param(p1->p.type,p2->p.type)->Hertzian_sig)
     return;
 
   //TRACE(printf("%d: particles %d and %d within bonding distance %lf\n", this_node, p1->p.identity, p2->p.identity, dist_betw_part));
