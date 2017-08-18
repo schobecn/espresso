@@ -748,18 +748,18 @@ void handle_collisions ()
   int new_highest_pid;
   MPI_Reduce(&vs_to_be_created, &new_highest_pid,1,MPI_INT, MPI_SUM,0,comm_cart);
   new_highest_pid-=1;
-  printf("node: %d, new_highest_pid: %d\n",this_node, new_highest_pid);
+  // printf("node: %d, new_highest_pid: %d\n",this_node, new_highest_pid);
 
   // On the head node, call added_particle, before any particles are created
   if (this_node==0) {
     for (int i=max_seen_particle+1;i<=new_highest_pid-max_seen_particle-1;i++) {
       added_particle(i);
-      printf("added_particle(%d)\n",i);
+      // printf("added_particle(%d)\n",i);
     }
   }
 
   
-  printf("Node: %d, vs_to_be_created: %d, first_local_pid_to_use: %d\n",this_node, vs_to_be_created,first_local_pid_to_use);
+  // printf("Node: %d, vs_to_be_created: %d, first_local_pid_to_use: %d\n",this_node, vs_to_be_created,first_local_pid_to_use);
 
   
       
@@ -804,7 +804,7 @@ void handle_collisions ()
     }
       } // Loop over all collisions in the queue
     } // are we in one of the vs_based methods
-  printf("Node %d: end of vs based methods\n", this_node);
+  // printf("Node %d: end of vs based methods\n", this_node);
 #endif //defined VIRTUAL_SITES_RELATIVE
   
 
