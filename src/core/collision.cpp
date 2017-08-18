@@ -249,7 +249,7 @@ inline bool glue_to_surface_criterion(const Particle* const p1, const Particle* 
 
 // Detect a collision between the given particles.
 // Add it to the queue in case virtual sites should be added at the point of collision
-void detect_collision(Particle* p1, Particle* p2, const double& dist_betw_part)
+void detect_collision(const Particle* p1, const Particle* p2, const double& dist_betw_part)
 {
 
   //if (dist_betw_part > collision_params.distance)
@@ -294,26 +294,26 @@ void detect_collision(Particle* p1, Particle* p2, const double& dist_betw_part)
   }
   queue_collision(p1->p.identity,p2->p.identity);
 
-  // for particles which are fixed
-  // ToDo: abhaengig von flag (fix) statt particle type
-  if (p1->p.ext_flag != 0 || p2->p.ext_flag != 0) {
-    p1->m.v[0] = 0;
-    p2->m.v[0] = 0;
-    p1->m.v[1] = 0;
-    p2->m.v[1] = 0;
-    p1->m.v[2] = 0;
-    p2->m.v[2] = 0;
-  }
+  // // for particles which are fixed
+  // // ToDo: abhaengig von flag (fix) statt particle type
+  // if (p1->p.ext_flag != 0 || p2->p.ext_flag != 0) {
+  //   p1->m.v[0] = 0;
+  //   p2->m.v[0] = 0;
+  //   p1->m.v[1] = 0;
+  //   p2->m.v[1] = 0;
+  //   p1->m.v[2] = 0;
+  //   p2->m.v[2] = 0;
+  // }
   
 
-  // conserve momentum when particles collide
+  // // conserve momentum when particles collide
 
-  p1->m.v[0] = (p1->p.mass * p1->m.v[0] + p2->p.mass * p2->m.v[0]) / (p1->p.mass + p2->p.mass);
-  p2->m.v[0] = p1->m.v[0];
-  p1->m.v[1] = (p1->p.mass * p1->m.v[1] + p2->p.mass * p2->m.v[1]) / (p1->p.mass + p2->p.mass);
-  p2->m.v[1] = p1->m.v[1];
-  p1->m.v[2] = (p1->p.mass * p1->m.v[2] + p2->p.mass * p2->m.v[2]) / (p1->p.mass + p2->p.mass);
-  p2->m.v[2] = p1->m.v[2];
+  // p1->m.v[0] = (p1->p.mass * p1->m.v[0] + p2->p.mass * p2->m.v[0]) / (p1->p.mass + p2->p.mass);
+  // p2->m.v[0] = p1->m.v[0];
+  // p1->m.v[1] = (p1->p.mass * p1->m.v[1] + p2->p.mass * p2->m.v[1]) / (p1->p.mass + p2->p.mass);
+  // p2->m.v[1] = p1->m.v[1];
+  // p1->m.v[2] = (p1->p.mass * p1->m.v[2] + p2->p.mass * p2->m.v[2]) / (p1->p.mass + p2->p.mass);
+  // p2->m.v[2] = p1->m.v[2];
   
 }
 
@@ -769,18 +769,18 @@ void handle_collisions ()
   int new_highest_pid;
   MPI_Reduce(&vs_to_be_created, &new_highest_pid,1,MPI_INT, MPI_SUM,0,comm_cart);
   new_highest_pid-=1;
-  printf("node: %d, new_highest_pid: %d\n",this_node, new_highest_pid);
+  // printf("node: %d, new_highest_pid: %d\n",this_node, new_highest_pid);
 
   // On the head node, call added_particle, before any particles are created
   if (this_node==0) {
     for (int i=max_seen_particle+1;i<=new_highest_pid-max_seen_particle-1;i++) {
       added_particle(i);
-      printf("added_particle(%d)\n",i);
+      // printf("added_particle(%d)\n",i);
     }
   }
 
   
-  printf("Node: %d, vs_to_be_created: %d, first_local_pid_to_use: %d\n",this_node, vs_to_be_created,first_local_pid_to_use);
+  // printf("Node: %d, vs_to_be_created: %d, first_local_pid_to_use: %d\n",this_node, vs_to_be_created,first_local_pid_to_use);
 
   
       
@@ -825,7 +825,7 @@ void handle_collisions ()
     }
       } // Loop over all collisions in the queue
     } // are we in one of the vs_based methods
-  printf("Node %d: end of vs based methods\n", this_node);
+  // printf("Node %d: end of vs based methods\n", this_node);
 #endif //defined VIRTUAL_SITES_RELATIVE
   
 
