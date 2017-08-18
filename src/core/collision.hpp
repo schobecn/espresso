@@ -36,9 +36,10 @@
 /** raise a background error on collision, to allow further processing in Tcl.
     Can be combined with a bonding mode, if desired
  */
-#define COLLISION_MODE_EXCEPTION 1
+
+#define COLLISION_MODE_OFF 0
 /// just create bond between centers of colliding particles
-#define COLLISION_MODE_BOND  2
+#define COLLISION_MODE_BOND 2
 /** create a bond between the centers of the colloiding particles,
     plus two virtual sites at the point of collision and bind them
     together. This prevents the particles from sliding against each
@@ -57,8 +58,12 @@ typedef struct {
   int bond_vs;
   /// particle type for virtual sites created on collision
   int vs_particle_type;
+
   /// collision handling mode, a combination of constants COLLISION_MODE_*
   int mode;
+  /** Raise exception on collision */
+  bool exception_on_collision;
+
   /// distance at which particles are bound
   double distance;
   /// For mode "glue to surface": The distance from the particle which is to be glued to the new virtual site
@@ -75,6 +80,8 @@ typedef struct {
   /// different angle bonds with different equilibrium angles
   /// Are expected to have ids immediately following to bond_three_particles
   int three_particle_angle_resolution;
+  /** Placement of virtual sites for MODE_VS. 0=on same particle as related to, 1=on collision partner. 0.5=in the middle between */
+  double vs_placement;
 } Collision_parameters;
 
 /// Parameters for collision detection
@@ -84,27 +91,15 @@ extern Collision_parameters collision_params;
     a bond between the particles is added as marker and the collision is
     recorded in the queue for later processing.
 */
-void detect_collision(Particle* p1, Particle* p2);
+void detect_collision(const Particle* const p1, const Particle* const p2, const double& dist_betw_part);
 
 void prepare_collision_queue();
 
 /// Handle the collisions recorded in the queue
 void handle_collisions();
 
-/** set the parameters for the collision detection
-    @param mode is a bitset out of the COLLISION_MODE_* bits
-    @param d is the collision distance, below that a bond is generated
-    @param bond_centers is the type of the bond between the real particles
-    @param bond_vs is the type of the bond between the virtual particles,
-    if using noslip bonds
-    @param t is the type of the virtual sites, if using noslip bonds
-    @param d2 for the "glue to surface" mode is the distance between the particle to be glued and the new virtual site
-    @param tg for the "glue to surface" is the type of the particle being glued
-    @param tv for the "glue to surface" is the type of the particle to which the virtual site is attached
-    @param bond_three_particles is the three-particle-bond parameter
-    @param angle_resolution is the three_particle_angle_resolution parameter in order to define different angle bonds
- */
-int collision_detection_set_params(int mode, double d, int bond_centers, int bond_vs,int t,int d2, int tg, int tv, int ta, int bond_three_particles, int angle_resolution);
+/** @brief Validates collision parameters and creates particle types if needed */
+bool validate_collision_parameters();
 
 #endif
 

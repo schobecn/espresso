@@ -46,6 +46,9 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
 from .ekboundaries import EKBoundaries
 
+IF COLLISION_DETECTION == 1:
+    from .collision_detection import CollisionDetection,CollisionMode
+
 import sys
 import random  # for true random numbers from os.urandom()
 
@@ -80,7 +83,6 @@ cdef class System(object):
         lbboundaries
         ekboundaries
         __seed
-
 
     def __init__(self):
         global _system_created

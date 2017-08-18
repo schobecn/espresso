@@ -186,9 +186,16 @@ void rescale_boxl(int dir, double d_new);
   *  @param b the vector to subtract
   *  @param res where to store the result
 */
+// <<<<<<< HEAD
 template <typename T, typename U, typename V>
 inline void get_mi_vector(T &res, U const &a, V const &b) {
   for (int i = 0; i < 3; i++) {
+// =======
+// inline void get_mi_vector(double res[3], const double a[3], const double b[3]) {
+//   int i;
+
+//   for (i = 0; i < 3; i++) {
+// >>>>>>> rudolf/py_collision_detection
     res[i] = a[i] - b[i];
     if (PERIODIC(i))
       res[i] -= dround(res[i] * box_l_i[i]) * box_l[i];
