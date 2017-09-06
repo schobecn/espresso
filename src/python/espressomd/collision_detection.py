@@ -1,4 +1,4 @@
-File Edit Options Buffers Tools Python Help
+#File Edit Options Buffers Tools Python Help
 from .script_interface import ScriptInterfaceHelper
 from enum import IntEnum
 from .utils import handle_errors
