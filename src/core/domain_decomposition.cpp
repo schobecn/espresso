@@ -1136,6 +1136,32 @@ int calc_processor_min_num_cells()
   return min;
 }
 
+void reset_particle_list () {
+  std::vector<int> local_part_idx = std::vector<int>();
+  for (int c = 0; c < local_cells.n; ++c) {
+    Cell *cell = local_cells.cell[c];
+    for (int p = 0; p < cell->n; ++p) {
+      local_part_idx.push_back(cell->part[p].p.identity);
+    }
+  }
+  // std::cout << "[rank " << this_node << "] n_part: " << n_part << std::endl;
+  std::sort(local_part_idx.begin(), local_part_idx.end());
+  int ctr = 0;
+  for (int i = 0; i < n_part; ++i) {
+    if (local_part_idx.size() > 0) {
+      if (i == local_part_idx[ctr]) {
+        ++ctr;
+      }
+    } else {
+      local_particles[i] = NULL;
+    }
+  }
+  if (ctr != local_part_idx.size()) {
+    // errexit();
+  }
+}
+   
+ 
 void calc_link_cell()
 {
   int c, np1, n, np2, i ,j, j_start;
@@ -1144,6 +1170,7 @@ void calc_link_cell()
   Particle *p1, *p2;
   double dist2, vec21[3];
 
+  // reset_particle_list();
   /* Loop local cells */
   for (c = 0; c < local_cells.n; c++) {
 
@@ -1162,6 +1189,7 @@ void calc_link_cell()
 	/* Tasks within cell: bonded forces */
 	if(n == 0) {
           add_single_particle_force(&p1[i]);
+
 	  if (rebuild_verletlist)
 	    memcpy(p1[i].l.p_old, p1[i].r.p, 3*sizeof(double));
 

@@ -1419,6 +1419,7 @@ void added_particle(int part)
 {
   int i;
 
+  
   if (part > max_seen_particle) {
     n_part++;
     realloc_local_particles(part);

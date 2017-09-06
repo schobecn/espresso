@@ -183,8 +183,9 @@ espressoSystemInterface.update();
       else
     calculate_verlet_ia();
     }
-    else
+    else {
       calc_link_cell();
+    }
     break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_calculate_ia();
@@ -206,7 +207,7 @@ espressoSystemInterface.update();
   // Must be done here. Forces need to be ghost-communicated
     IBM_VolumeConservation();
 #endif
-
+    
 #ifdef LB
   if (lattice_switch & LATTICE_LB) calc_particle_lattice_ia() ;
 #endif
@@ -246,7 +247,6 @@ espressoSystemInterface.update();
 
   // mark that forces are now up-to-date
   recalc_forces = 0;
-
 }
 
 void calc_long_range_forces()

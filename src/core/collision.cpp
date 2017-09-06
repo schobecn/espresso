@@ -231,7 +231,9 @@ void detect_collision(Particle* p1, Particle* p2)
   // Retrieving the particles from local_particles is necessary, because the particle might be a
   // ghost, and those can't store bonding info.
   p1 = local_particles[part1];
+  //  printf("detect_collision: local_particles[part1] = %d\n", p1); 
   p2 = local_particles[part2];
+  //printf("detect_collision: local_particles[part2] = %d\n", p2); 
 
 #ifdef VIRTUAL_SITES_RELATIVE
   // Ignore virtual particles
@@ -274,7 +276,7 @@ void detect_collision(Particle* p1, Particle* p2)
     // is in the middle of the vecotr connecting the particle
     // centers
     if (! (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF))
-      c=0.5;
+      c=0.7;
     else
     {
       // Find out, which is the particle to be glued.
@@ -302,33 +304,49 @@ void detect_collision(Particle* p1, Particle* p2)
      }
      for (int i=0;i<3;i++) {
        new_position[i] = p1->r.p[i] - vec21[i] * c;
-    }
+     }
+     
 
+     queue_collision(part1,part2,new_position);
 
+     // conserve momentum when particles collide
+     // printf("before: p1->m.v = %f\n", p1->m.v );
 
-    queue_collision(part1,part2,new_position);
+     // printf("p1 virtual - %d\n", p1->p.isVirtual);
+     // printf("p2 virtual - %d\n", p2->p.isVirtual);
+     
+     // printf("p1->m.v[0] = %f\n", p1->m.v[0]);
+     // printf("p1->m.v[1] = %f\n", p1->m.v[1]);
+     // printf("p1->m.v[2] = %f\n", p1->m.v[2]);
+     // printf("p2->m.v[0] = %f\n", p1->m.v[0]);
+     // printf("p2->m.v[1] = %f\n", p1->m.v[1]);
+     // printf("p2->m.v[2] = %f\n", p1->m.v[2]);
 
-    // for particles which are fixed
-    // ToDo: abhaengig von flag (fix) statt particle type
-    if (p1->p.ext_flag != 0 || p2->p.ext_flag != 0) {
-      p1->m.v[0] = 0;
-      p2->m.v[0] = 0;
-      p1->m.v[1] = 0;
-      p2->m.v[1] = 0;
-      p1->m.v[2] = 0;
-      p2->m.v[2] = 0;
-    }
+     // for (int i=0;i<3;i++) {
+     //   p1->m.v[i] = (p1->p.mass * p1->m.v[i] + p2->p.mass * p2->m.v[i]) / (p1->p.mass + p2->p.mass);
+     //   p2->m.v[i] = p1->m.v[i];
+     //   printf("blubb\n");
+     // }
 
+     // printf("after: p1->m.v[0] = %f\n", p1->m.v[0]);
+     // printf("after: p1->m.v[1] = %f\n", p1->m.v[1]);
+     // printf("after: p1->m.v[2] = %f\n", p1->m.v[2]);
+     // printf("after: p2->m.v[0] = %f\n", p1->m.v[0]);
+     // printf("after: p2->m.v[1] = %f\n", p1->m.v[1]);
+     // printf("after: p2->m.v[2] = %f\n", p1->m.v[2]);
 
-    // conserve momentum when particles collide
-
-    p1->m.v[0] = (p1->p.mass * p1->m.v[0] + p2->p.mass * p2->m.v[0]) / (p1->p.mass + p2->p.mass);
-    p2->m.v[0] = p1->m.v[0];
-    p1->m.v[1] = (p1->p.mass * p1->m.v[1] + p2->p.mass * p2->m.v[1]) / (p1->p.mass + p2->p.mass);
-    p2->m.v[1] = p1->m.v[1];
-    p1->m.v[2] = (p1->p.mass * p1->m.v[2] + p2->p.mass * p2->m.v[2]) / (p1->p.mass + p2->p.mass);
-    p2->m.v[2] = p1->m.v[2];
-    
+     
+     // // for particles which are fixed
+     // // ToDo: abhaengig von flag (fix) statt particle type
+     // if (p1->p.ext_flag != 0 || p2->p.ext_flag != 0) {
+     //   p1->m.v[0] = 0;
+     //   p2->m.v[0] = 0;
+     //   p1->m.v[1] = 0;
+     //   p2->m.v[1] = 0;
+     //   p1->m.v[2] = 0;
+     //   p2->m.v[2] = 0;
+     // }
+     
   }
 }
 
@@ -508,7 +526,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid, const double* pos
   // A resort occurs after vs-based collisions anyway, which will move the vs into the right cell.
 
   // hier gehts schief.. bei added_particle(current_vs_pid)
-  added_particle(current_vs_pid);
+  // added_particle(current_vs_pid);
   printf("addedD_particle(%d)\n",current_vs_pid);
 
   local_place_particle(current_vs_pid,initial_pos,1);
@@ -517,6 +535,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid, const double* pos
   
   //(local_particles[max_seen_particle])->p.isVirtual=1;
   (local_particles[current_vs_pid])->p.isVirtual=1;
+  // printf("place_vs_and_relate_to_particle: local_particles[current_vs_pid] = %d\n", local_particles[current_vs_pid]); 
 
 #ifdef ROTATION_PER_PARTICLE
   (local_particles[relate_to])->p.rotation=14;
@@ -524,7 +543,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid, const double* pos
 
   // (local_particles[max_seen_particle])->p.type=collision_params.vs_particle_type;
   (local_particles[current_vs_pid])->p.type=collision_params.vs_particle_type;
-  //on_particle_change();
+  // on_particle_change();
 }
 
 // CS change
@@ -806,12 +825,14 @@ void handle_collisions ()
     // printf("node: %d, new_highest_pid: %d\n",this_node, new_highest_pid);
 
     // On the head node, call added_particle, before any particles are created
-    if (this_node==0) {
-      for (int i=max_seen_particle+1;i<=new_highest_pid;i++) {
-	added_particle(i);
-	printf("added_particle(%d)\n",i);
-      }
+    //if (this_node==0) {
+    for (int i=max_seen_particle+1;i<=new_highest_pid;i++) {
+      added_particle(i);
+      printf("added_particle(%d)\n",i);
     }
+    //}
+    MPI_Bcast(&n_part, 1, MPI_INT, 0, comm_cart);
+
     
     // printf("Node: %d, vs_to_be_created: %d, first_local_pid_to_use: %d\n",this_node, vs_to_be_created,first_local_pid_to_use);
     
@@ -940,12 +961,14 @@ void handle_collisions ()
 	{
 	  //announce_resort_particles();
 	  on_particle_change();
-	  announce_resort_particles();	
+	  announce_resort_particles();
+	  //cells_resort_particles(1);
+	  // dd_exchange_and_sort_particles();
 	}
     }
   
   // Reset the collision queue
-  if (number_of_collisions>0)
+  if (total_collisions>0)
     free(collision_queue);
   
   number_of_collisions = 0;

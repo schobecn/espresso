@@ -488,7 +488,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
     @param p1 particle for which to calculate forces
 */
 
-inline void add_bonded_force(Particle *p1) {
+inline void add_bonded_force(Particle *p1) {    
   double dx[3] = {0., 0., 0.};
   double force[3] = {0., 0., 0.};
   double force2[3] = {0., 0., 0.};
@@ -521,6 +521,8 @@ inline void add_bonded_force(Particle *p1) {
 
     /* fetch particle 2, which is always needed */
     p2 = local_particles[p1->bl.e[i++]];
+    // ML change
+    // if (p2->p.identity != p1->bl.e[i]) {
     if (!p2) {
       runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
                         << " and " << p1->bl.e[i - 1]
@@ -579,6 +581,7 @@ inline void add_bonded_force(Particle *p1) {
     }
 
     switch (type) {
+
     case BONDED_IA_FENE:
       bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
       break;
@@ -588,6 +591,7 @@ inline void add_bonded_force(Particle *p1) {
           calc_harmonic_dumbbell_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
+
     case BONDED_IA_HARMONIC:
       bond_broken = calc_harmonic_pair_force(p1, p2, iaparams, dx, force);
       break;
@@ -599,6 +603,7 @@ inline void add_bonded_force(Particle *p1) {
       bond_broken = calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
+
 #ifdef HYDROGEN_BOND
     case BONDED_IA_CG_DNA_BASEPAIR:
       bond_broken = calc_hydrogen_bond_force(p1, p2, p3, p4, iaparams, force,
@@ -683,7 +688,7 @@ inline void add_bonded_force(Particle *p1) {
       break;
     }
 #endif
-
+    
 #ifdef LENNARD_JONES
     case BONDED_IA_SUBT_LJ:
       bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
@@ -777,18 +782,21 @@ inline void add_bonded_force(Particle *p1) {
       bond_broken = calc_umbrella_pair_force(p1, p2, iaparams, dx, force);
       break;
 #endif
+
 #ifdef BOND_VIRTUAL
     case BONDED_IA_VIRTUAL_BOND:
       bond_broken = 0;
       force[0] = force[1] = force[2] = 0.0;
       break;
 #endif
+
     default:
       runtimeErrorMsg() << "add_bonded_force: bond type of atom "
                         << p1->p.identity << " unknown\n";
       return;
     }
 
+    printf("n_partners = %d\n", n_partners);
     switch (n_partners) {
     case 1:
       if (bond_broken) {
@@ -808,8 +816,23 @@ inline void add_bonded_force(Particle *p1) {
           break;
 #endif // BOND_ENDANGLEDIST
         default:
+	  printf("this_node = %d, 73 add_bonded_force\n", this_node);
+	  printf("this_node = %d, force[j] = %f\n", this_node, force[j]);
+	  printf("this_node = %d, p1->f.f[j] = %f\n", this_node, p1->f.f[j]);
+	  printf("this_node = %d, p2->f.f[j] = %f\n", this_node, p2->f.f[j]);
           p1->f.f[j] += force[j];
+	  printf("this_node = %d, bliblablubb\n", this_node);
+	  if (this_node == 2) {
+	    for (int bla = 0; bla < n_part; ++bla) {
+	      std::cout << "[rank " << this_node << "] part "<< bla << ": "
+			<< local_particles[bla] << std::endl;
+	    }
+	  }
           p2->f.f[j] -= force[j];
+	  printf("this_node = %d, 74 add_bonded_force\n", this_node);
+	  printf("this_node = %d, p1->f.f[j] = %f\n", this_node, p1->f.f[j]);
+	  printf("this_node = %d, p2->f.f[j] = %f\n", this_node, p2->f.f[j]);
+
 #ifdef ROTATION
           p1->f.torque[j] += torque1[j];
           p2->f.torque[j] += torque2[j];
@@ -821,7 +844,9 @@ inline void add_bonded_force(Particle *p1) {
           nptiso.p_vir[j] += force[j] * dx[j];
 #endif
       }
+
       break;
+
     case 2:
       if (bond_broken) {
         runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
@@ -843,6 +868,7 @@ inline void add_bonded_force(Particle *p1) {
         }
       }
       break;
+
     case 3:
       if (bond_broken) {
         runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
@@ -904,6 +930,7 @@ inline void add_bonded_force(Particle *p1) {
           p8->f.f[j] += force8[j];
         }
 #endif
+
         break;
       }
     }

@@ -307,6 +307,7 @@ void calc_minimal_box_dimensions() {
   for (i = 0; i < 3; i++) {
     min_box_l = std::min(min_box_l, box_l[i]);
     min_local_box_l = std::min(min_local_box_l, local_box_l[i]);
+    printf("this node = %d: min_local_box_l = %f\n", this_node, min_local_box_l);
   }
 }
 

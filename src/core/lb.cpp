@@ -3218,6 +3218,8 @@ void calc_particle_lattice_ia() {
   Particle *p ;
   double force[3];
 
+  // printf("this_node = %d: 0 calc_particle_lattice_ia\n", this_node);
+
   if (transfer_momentum) {
       
     if (lbpar.resend_halo) { /* first MD step after last LB update */
@@ -3235,6 +3237,7 @@ void calc_particle_lattice_ia() {
       for (int i = 0; i < lblattice.halo_grid_volume; ++i) 
           lbfields[i].recalc_fields = 1;
     }
+    // printf("this_node = %d: 1 calc_particle_lattice_ia\n", this_node);
 
     /* draw random numbers for local particles */
     for (int c = 0; c < local_cells.n; c++) 
@@ -3265,13 +3268,15 @@ void calc_particle_lattice_ia() {
 #endif // ADDITIONAL_CHECKS
           }
       }
-      
+    
+    // printf("this_node = %d: 2 calc_particle_lattice_ia\n", this_node);
     /* communicate the random numbers */
     ghost_communicator(&cell_structure.ghost_lbcoupling_comm);
+
 #ifdef ENGINE
     ghost_communicator(&cell_structure.ghost_swimming_comm);
 #endif
-
+ 
     /* local cells */
     for (int c = 0; c < local_cells.n; c++) {
       cell = local_cells.cell[c] ;
@@ -3297,7 +3302,7 @@ void calc_particle_lattice_ia() {
         }
       }
     }
-      
+
     /* ghost cells */
     for (int c = 0; c < ghost_cells.n ;c++) {
       cell = ghost_cells.cell[c] ;
