@@ -40,11 +40,11 @@ namespace ScriptInterface {
 		      
 			{"distance",collision_params.distance},
 			  {"distance_glued_part_to_vs",collision_params.dist_glued_part_to_vs},
-			  
-			    {"part_type_vs",collision_params.vs_particle_type},
-			      {"part_type_to_be_glued",collision_params.part_type_to_be_glued},
-				{"part_type_to_attach_vs_to",collision_params.part_type_to_attach_vs_to},
-				  {"part_type_after_glueing",collision_params.part_type_after_glueing}
+			    {"vs_placement", collision_params.vs_placement},
+			      {"part_type_vs",collision_params.vs_particle_type},
+				{"part_type_to_be_glued",collision_params.part_type_to_be_glued},
+				  {"part_type_to_attach_vs_to",collision_params.part_type_to_attach_vs_to},
+				    {"part_type_after_glueing",collision_params.part_type_after_glueing}
 	  });
       };
       Variant call_method(const std::string& name, const VariantMap& params) override {
