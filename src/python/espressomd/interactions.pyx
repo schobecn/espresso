@@ -659,13 +659,15 @@ cdef class BondedInteraction(object):
 
         # Or have we been called with keyword args describing the interaction
         elif len(args) == 0:
-            # Check if all required keys are given
-            for k in self.required_keys():
-                if k not in kwargs:
-                    raise ValueError(
-                        "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
+            # virtual bond has no required_keys
+            if self.required_keys() != None:
+                # Check if all required keys are given
+                for k in self.required_keys():
+                    if k not in kwargs:
+                        raise ValueError(
+                            "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
 
-            self.params = kwargs
+                self.params = kwargs
 
             # Validation of parameters
             self.validate_params()
@@ -715,8 +717,10 @@ cdef class BondedInteraction(object):
         if hasattr(attr, '__call__') and attr.__name__ == "_set_params_in_es_core":
             def sync_params(*args, **kwargs):
                 result = attr(*args, **kwargs)
-                self._params.update(self._get_params_from_es_core())
-                return result
+                # virtual bond (result == None) has no params
+                if result != None:
+                    self._params.update(self._get_params_from_es_core())
+                    return result
             return sync_params
         else:
             return attr
@@ -1260,13 +1264,16 @@ IF BOND_VIRTUAL == 1:
 
         def valid_keys(self):
             return
-
+            #empty_list = list()
+            #return empty_list
+            
+            
         def required_keys(self):
             return
 
         def set_default_params(self):
             pass
-
+        
         def _get_params_from_es_core(self):
             pass
 
@@ -1517,7 +1524,6 @@ IF LENNARD_JONES:
 
 
 class BondedInteractions(object):
-
     """Represents the bonded interactions. Individual interactions can be accessed using
     NonBondedInteractions[i], where i is the bond id. Will return a bonded interaction 
     from bonded_interaction_classes"""
@@ -1532,7 +1538,7 @@ class BondedInteractions(object):
             raise IndexError(
                 "Index to BondedInteractions[] out of range")
         bond_type = bonded_ia_params[key].type
-
+        
         # Check if the bonded interaction exists in Espresso core
         if bond_type == -1:
             raise ValueError(
