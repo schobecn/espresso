@@ -1,8 +1,9 @@
-#File Edit Options Buffers Tools Python Help
 from .script_interface import ScriptInterfaceHelper
 from enum import IntEnum
 from .utils import handle_errors
 from .interactions import BondedInteraction,BondedInteractions
+
+
 
 class CollisionDetection(ScriptInterfaceHelper):
     """Inteface to the collision detection / dynamic binding."""
@@ -15,13 +16,14 @@ class CollisionDetection(ScriptInterfaceHelper):
             kwargs["mode"]=CollisionMode.off
         super(type(self),self).__init__(*args,**kwargs)
             
+            
     def validate(self):
         return self.call_method("validate")
-    
+            
     # Do not allow setting of individual attributes
     def __setattr__(self,*args,**kwargs):
         raise Exception("Please et all parameters at once via collision_detection.set_params()")
-    
+            
     # Override to call validat after parameter update
     def set_params(self, **kwargs):
         if not ("mode" in kwargs):
@@ -48,14 +50,14 @@ class CollisionDetection(ScriptInterfaceHelper):
     def _get_parameter(self,name):
         res=super(type(self),self)._get_parameter(name)
         return self._convert_param(name,res)
-        
+    
     def get_params(self):
         res=super(type(self),self).get_params()
         for k in res.keys():
             res[k]=self._convert_param(k,res[k])
         return res
         
-        
+                                
     def _convert_param(self,name,value):
         # Convert mode parameter into python enum
         res=value
@@ -69,7 +71,7 @@ class CollisionDetection(ScriptInterfaceHelper):
             else:
                 res=BondedInteractions()[value]
         return res
-            
+                                            
     def _params_for_mode(self,mode):
         if mode == CollisionMode.off:
             return ("mode",)
@@ -78,12 +80,12 @@ class CollisionDetection(ScriptInterfaceHelper):
         if mode == CollisionMode.bind_at_point_of_collision:
             return ("mode","bond_centers","bond_vs","part_type_vs","distance","vs_placement")
         if mode == CollisionMode.glue_to_surface:
-            return ("mode","bond_centers","bond_vs","part_type_vs","part_type_to_be_glued","part_type_to_attach_vs_to","part_type_after_glueing","dista\
-            nce","distance_glued_particle_to_vs")
-        if mode == CollisionMode.bind_three_particles:
-            return ("mode","bond_centers","distance","bond_three_particles","three_particle_binding_angle_resolution")
+            return ("mode","bond_centers","bond_vs","part_type_vs","part_type_to_be_glued","part_type_to_attach_vs_to","part_type_after_glueing","distance","distance_glued_particle_to_vs")
+        if mode == "bind_three_particles":
+            return ("mode","bond_centers","distance","bond_trhee_particles","three_particle_binding_angle_resolution")
         raise Exception("Mode not hanled: "+mode.__str__())
-        
+    
+    
 class CollisionMode(IntEnum):
     """Modes for the collision detection /; dynamic binding features."""
     off = 0
@@ -91,3 +93,4 @@ class CollisionMode(IntEnum):
     bind_at_point_of_collision = 4
     glue_to_surface = 8
     bind_three_particles = 16
+    
