@@ -31,19 +31,20 @@ namespace ScriptInterface {
       CollisionDetection() {
 	add_parameters({
 	    {"mode", collision_params.mode},
+	      {"exception_on_collision", collision_params.exception_on_collision},
 	      
-	      {"bond_centers",collision_params.bond_centers},
-		{"bond_vs",collision_params.bond_vs},
-		  {"bond_three_particles",collision_params.bond_three_particles},
-		    {"three_particle_binding_angle_resolution",collision_params.three_particle_angle_resolution},
-		    
-		      {"distance",collision_params.distance},
-			{"distance_glued_part_to_vs",collision_params.dist_glued_part_to_vs},
-			
-			  {"part_type_vs",collision_params.vs_particle_type},
-			    {"part_type_to_be_glued",collision_params.part_type_to_be_glued},
-			      {"part_type_to_attach_vs_to",collision_params.part_type_to_attach_vs_to},
-				{"part_type_after_glueing",collision_params.part_type_after_glueing}
+		{"bond_centers",collision_params.bond_centers},
+		  {"bond_vs",collision_params.bond_vs},
+		    {"bond_three_particles",collision_params.bond_three_particles},
+		      {"three_particle_binding_angle_resolution",collision_params.three_particle_angle_resolution},
+		      
+			{"distance",collision_params.distance},
+			  {"distance_glued_part_to_vs",collision_params.dist_glued_part_to_vs},
+			  
+			    {"part_type_vs",collision_params.vs_particle_type},
+			      {"part_type_to_be_glued",collision_params.part_type_to_be_glued},
+				{"part_type_to_attach_vs_to",collision_params.part_type_to_attach_vs_to},
+				  {"part_type_after_glueing",collision_params.part_type_after_glueing}
 	  });
       };
       const std::string name() const { return "CollisionDetection::CollisionDetection"; };
