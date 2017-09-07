@@ -660,18 +660,17 @@ cdef class BondedInteraction(object):
         # Or have we been called with keyword args describing the interaction
         elif len(args) == 0:
             # virtual bond has no required_keys
-            if self.required_keys() != None:
-                # Check if all required keys are given
-                for k in self.required_keys():
-                    if k not in kwargs:
-                        raise ValueError(
-                            "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
-
-                self.params = kwargs
+            #if self.required_keys() != None:
+            # Check if all required keys are given
+            for k in self.required_keys():
+                if k not in kwargs:
+                    raise ValueError(
+                        "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
+            self.params = kwargs
 
             # Validation of parameters
             self.validate_params()
-
+            
         else:
             raise Exception(
                 "The constructor has to be called either with a bond id (as interger), or with a set of keyword arguments describing a new interaction")
@@ -686,6 +685,7 @@ cdef class BondedInteraction(object):
         # check, if the bond parameters saved in the class still match those
         # saved in Espresso
         temp_params = self._get_params_from_es_core()
+                        
         if self._params != temp_params:
             return False
 
@@ -718,13 +718,13 @@ cdef class BondedInteraction(object):
             def sync_params(*args, **kwargs):
                 result = attr(*args, **kwargs)
                 # virtual bond (result == None) has no params
-                if result != None:
-                    self._params.update(self._get_params_from_es_core())
-                    return result
+                #if result != None:
+                self._params.update(self._get_params_from_es_core())
+                return result
+        
             return sync_params
         else:
             return attr
-
 
     def _get_params_from_es_core(self):
         raise Exception(
@@ -1264,12 +1264,10 @@ IF BOND_VIRTUAL == 1:
 
         def valid_keys(self):
             return
-            #empty_list = list()
-            #return empty_list
-            
-            
+                      
         def required_keys(self):
-            return
+            t = ()
+            return t
 
         def set_default_params(self):
             pass
