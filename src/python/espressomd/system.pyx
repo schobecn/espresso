@@ -82,6 +82,7 @@ cdef class System(object):
         constraints
         lbboundaries
         ekboundaries
+        collision_detection
         __seed
 
 
