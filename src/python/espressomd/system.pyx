@@ -47,7 +47,7 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
 from .ekboundaries import EKBoundaries
 
 IF COLLISION_DETECTION == 1:
-    from .collision_detection import CollisionDetection,CollisionMode
+    from .collision_detection import CollisionDetection
 
 import sys
 import random  # for true random numbers from os.urandom()
@@ -107,7 +107,7 @@ cdef class System(object):
                 self.lbboundaries = LBBoundaries()
                 self.ekboundaries = EKBoundaries()
             IF COLLISION_DETECTION==1:
-                collision_detection=CollisionDetection(mode=CollisionMode.off)
+                self.collision_detection = CollisionDetection()
             _system_created = True
         else:
             raise RuntimeError("You can only have one instance of the system class at a time.")
@@ -210,9 +210,9 @@ cdef class System(object):
             if _time_step <= 0:
                 raise ValueError("Time Step must be positive")
             IF LB:
-                if lbpar.tau >= 0.0 and _time_step < lbpar.tau:
+                if lbpar.tau >= 0.0 and _time_step > lbpar.tau:
                     raise ValueError(
-                        "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(lbpar.tau) + ")")
+                        "Time Step (" + str(time_step) + ") must be < LB_time_step (" + str(lbpar.tau) + ")")
             IF LB_GPU:
                 if ( lbpar_gpu.tau >= 0.0 and
                      lbpar_gpu.tau-_time_step > numeric_limits[float].epsilon()*abs(lbpar_gpu.tau+_time_step) ):

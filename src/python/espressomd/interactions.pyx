@@ -666,7 +666,8 @@ cdef class BondedInteraction(object):
                 if k not in kwargs:
                     raise ValueError(
                         "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
-            self.params = kwargs
+            if self.required_keys():
+                self.params = kwargs
 
             # Validation of parameters
             self.validate_params()
@@ -718,9 +719,9 @@ cdef class BondedInteraction(object):
             def sync_params(*args, **kwargs):
                 result = attr(*args, **kwargs)
                 # virtual bond (result == None) has no params
-                #if result != None:
-                self._params.update(self._get_params_from_es_core())
-                return result
+                if result != None:
+                    self._params.update(self._get_params_from_es_core())
+                    return result
         
             return sync_params
         else:
