@@ -143,7 +143,11 @@ if $make_check; then
 else
     start "TEST"
 
-    cmd "mpiexec -n $check_procs ./pypresso $srcdir/testsuite/python/particle.py" || exit 1
+# <<<<<<< HEAD
+#     cmd "mpiexec -n $check_procs ./pypresso $srcdir/testsuite/python/particle.py" || exit 1
+# =======
+    cmd "mpiexec -n $check_procs ./pypresso $srcdir/testsuite/particle.py" || exit 1
+# >>>>>>> 475c3b5
 
     end "TEST"
 fi
