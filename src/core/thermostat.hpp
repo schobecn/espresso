@@ -36,7 +36,6 @@
 #include "lb.hpp"
 #include "dpd.hpp"
 #include "virtual_sites.hpp"
-#include "Vector.hpp"
 
 /** \name Thermostat switches*/
 /************************************************************/
@@ -54,13 +53,6 @@
 
 namespace Thermostat {
   auto noise = []() { return (d_random() - 0.5); };
-
-#ifdef PARTICLE_ANISOTROPY
-  using GammaType = Vector3d;
-#else
-  using GammaType = double;
-#endif
-
 }
 
 /************************************************
@@ -77,10 +69,19 @@ extern int thermo_switch;
 /** temperature. */
 extern double temperature;
 
+#ifndef PARTICLE_ANISOTROPY
 /** Langevin friction coefficient gamma. */
-extern Thermostat::GammaType langevin_gamma;
+extern double langevin_gamma;
+#else
+extern double langevin_gamma[3];
+#endif
+
+#ifndef ROTATIONAL_INERTIA
 /** Langevin friction coefficient gamma. */
-extern Thermostat::GammaType langevin_gamma_rotation;
+extern double langevin_gamma_rotation;
+#else
+extern double langevin_gamma_rotation[3];
+#endif
 
 /** Langevin for translations */
 extern bool langevin_trans;
