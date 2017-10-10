@@ -142,7 +142,6 @@ cdef class NonBondedInteraction(object):
         else:
             return attr
 
-
     def _get_params_from_es_core(self):
         raise Exception(
             "Subclasses of NonBondedInteraction must define the _get_params_from_es_core() method.")
@@ -191,7 +190,9 @@ IF LENNARD_JONES == 1:
 
         def _get_params_from_es_core(self):
             cdef ia_parameters * ia_params
-            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
             return {
                 "epsilon": ia_params.LJ_eps,
                 "sigma": ia_params.LJ_sig,
@@ -235,7 +236,8 @@ IF LENNARD_JONES == 1:
                 self._params["shift"] = -((self._params["sigma"] / self._params["cutoff"])**12 - (
                     self._params["sigma"] / self._params["cutoff"])**6)
 
-            if lennard_jones_set_params(self._part_types[0], self._part_types[1],
+            if lennard_jones_set_params(
+                self._part_types[0], self._part_types[1],
                                         self._params["epsilon"],
                                         self._params["sigma"],
                                         self._params["cutoff"],
@@ -348,19 +350,20 @@ IF GAY_BERNE:
 
         def _get_params_from_es_core(self):
             cdef ia_parameters * ia_params
-            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
             return {
                 "eps": ia_params.GB_eps,
                 "sig": ia_params.GB_sig,
                 "cut": ia_params.GB_cut,
-                "k1" : ia_params.GB_k1 ,
-                "k2" : ia_params.GB_k2 ,
-                "mu" : ia_params.GB_mu ,
-                "nu" : ia_params.GB_nu }
+                "k1": ia_params.GB_k1,
+                "k2": ia_params.GB_k2,
+                "mu": ia_params.GB_mu,
+                "nu": ia_params.GB_nu}
 
         def is_active(self):
             return (self._params["eps"] > 0)
-
 
         def set_params(self, **kwargs):
             """ Set parameters for the Lennard-Jones interaction.
@@ -402,10 +405,10 @@ IF GAY_BERNE:
                 "eps": 0.0,
                 "sig": 0.0,
                 "cut": 0.0,
-                "k1" : 0.0,
-                "k2" : 0.0,
-                "mu" : 0.0,
-                "nu" : 0.0}
+                "k1": 0.0,
+                "k2": 0.0,
+                "mu": 0.0,
+                "nu": 0.0}
 
         def type_name(self):
             return "GayBerne"
@@ -432,7 +435,9 @@ IF LENNARD_JONES_GENERIC == 1:
 
         def _get_params_from_es_core(self):
             cdef ia_parameters * ia_params
-            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
             return {
                 "epsilon": ia_params.LJGEN_eps,
                 "sigma": ia_params.LJGEN_sig,
@@ -532,7 +537,7 @@ IF LENNARD_JONES_GENERIC == 1:
                     LJGEN_SOFTCORE parameter. Allows control over how smoothly
                     the potential drops to zero as lambda approaches zero.
             lambda : float, optional
-                     LJGEN_SOFTCORE parameter. Tune the strength of the 
+                     LJGEN_SOFTCORE parameter. Tune the strength of the
                      interaction.
             """
             super(GenericLennardJonesInteraction, self).set_params(**kwargs)
@@ -581,7 +586,7 @@ class NonBondedInteractionHandle(object):
 
 cdef class NonBondedInteractions(object):
 
-    """Access to non-bonded interaction parameters via [i,j], where i,j are particle 
+    """Access to non-bonded interaction parameters via [i,j], where i,j are particle
     types. Returns NonBondedInteractionHandle.
     Also: access to force capping
     """
@@ -807,7 +812,7 @@ class BondedInteractionNotDefined(object):
 class FeneBond(BondedInteraction):
 
     def __init__(self, *args, **kwargs):
-        """ 
+        """
         FeneBond initialiser. Used to instatiate a FeneBond identifier
         with a given set of parameters.
 
@@ -853,7 +858,7 @@ class FeneBond(BondedInteraction):
 class HarmonicBond(BondedInteraction):
 
     def __init__(self, *args, **kwargs):
-        """ 
+        """
         HarmonicBond initialiser. Used to instatiate a HarmonicBond identifier
         with a given set of parameters.
 
@@ -868,7 +873,6 @@ class HarmonicBond(BondedInteraction):
                 broken.
         """
         super(HarmonicBond, self).__init__(*args, **kwargs)
-
 
     def type_number(self):
         return BONDED_IA_HARMONIC
@@ -900,8 +904,8 @@ IF ROTATION:
     class HarmonicDumbbellBond(BondedInteraction):
 
         def __init__(self, *args, **kwargs):
-            """ 
-            HarmonicDumbbellBond initialiser. Used to instatiate a 
+            """
+            HarmonicDumbbellBond initialiser. Used to instatiate a
             HarmonicDumbbellBond identifier with a given set of parameters.
 
             Parameters
@@ -917,8 +921,6 @@ IF ROTATION:
                     broken.
             """
             super(HarmonicDumbbellBond, self).__init__(*args, **kwargs)
-
-
 
         def type_number(self):
             return BONDED_IA_HARMONIC_DUMBBELL
@@ -951,8 +953,8 @@ IF ROTATION != 1:
     class HarmonicDumbbellBond(BondedInteraction):
 
         def __init__(self, *args, **kwargs):
-            """ 
-            HarmonicDumbbellBond initialiser. Used to instatiate a 
+            """
+            HarmonicDumbbellBond initialiser. Used to instatiate a
             HarmonicDumbbellBond identifier with a given set of parameters.
 
             Parameters
@@ -969,7 +971,6 @@ IF ROTATION != 1:
             """
             raise Exception(
                 "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
-
 
         def type_number(self):
             raise Exception(
@@ -1004,7 +1005,7 @@ IF BOND_CONSTRAINT == 1:
     class RigidBond(BondedInteraction):
 
         def __init__(self, *args, **kwargs):
-            """ 
+            """
             RigidBond initialiser. Used to instantiate a RigidBond identifier
             with a given set of parameters.
 
@@ -1018,7 +1019,6 @@ IF BOND_CONSTRAINT == 1:
                    Specifies the tolerance for velocity deviations.
             """
             super(RigidBond, self).__init__(*args, **kwargs)
-
 
         def type_number(self):
             return BONDED_IA_RIGID_BOND
@@ -1081,7 +1081,7 @@ IF TABULATED == 1:
     class Tabulated(BondedInteraction):
 
         def __init__(self, *args, **kwargs):
-            """ 
+            """
             RigidBond initialiser. Used to instantiate a RigidBond identifier
             with a given set of parameters.
 
@@ -1094,7 +1094,6 @@ IF TABULATED == 1:
                        Filename of the tabular.
             """
             super(Tabulated, self).__init__(*args, **kwargs)
-
 
         def type_number(self):
             return BONDED_IA_TABULATED
@@ -1115,7 +1114,9 @@ IF TABULATED == 1:
             make_bond_type_exist(self._bond_id)
             res = \
                 {"type": bonded_ia_params[self._bond_id].p.tab.type,
-                 "filename": utils.to_str(bonded_ia_params[self._bond_id].p.tab.filename),
+                 "filename":
+                     utils.to_str(
+                         bonded_ia_params[self._bond_id].p.tab.filename),
                  "npoints": bonded_ia_params[self._bond_id].p.tab.npoints,
                  "minval": bonded_ia_params[self._bond_id].p.tab.minval,
                  "maxval": bonded_ia_params[self._bond_id].p.tab.maxval,
@@ -1184,7 +1185,9 @@ IF TABULATED == 1:
 
         def _get_params_from_es_core(self):
             cdef ia_parameters * ia_params
-            ia_params = get_ia_param_safe(self._part_types[0], self._part_types[1])
+            ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
             return {
                 "filename": utils.to_str(ia_params.TAB_filename)}
 
@@ -1252,7 +1255,7 @@ IF BOND_VIRTUAL == 1:
     class Virtual(BondedInteraction):
 
         def __init__(self, *args, **kwargs):
-            """ 
+            """
             VirtualBond initialiser. Used to instantiate a VirtualBond identifier.
             """
             super(Virtual, self).__init__(*args, **kwargs)
@@ -1305,11 +1308,14 @@ IF BOND_ENDANGLEDIST == 1:
             return \
                 {"bend": bonded_ia_params[self._bond_id].p.endangledist.bend,
                  "phi0": bonded_ia_params[self._bond_id].p.endangledist.phi0,
-                 "distmin": bonded_ia_params[self._bond_id].p.endangledist.distmin,
+                 "distmin":
+                     bonded_ia_params[self._bond_id].p.endangledist.distmin,
                  "distmax": bonded_ia_params[self._bond_id].p.endangledist.distmax}
 
         def _set_params_in_es_core(self):
-            endangledist_set_params(self._bond_id, self._params["bend"], self._params["phi0"], self._params["distmin"],
+            endangledist_set_params(
+                self._bond_id, self._params["bend"], self._params[
+                    "phi0"], self._params["distmin"],
                                     self._params["distmax"])
 
 ELSE:
@@ -1524,7 +1530,7 @@ IF LENNARD_JONES:
 
 class BondedInteractions(object):
     """Represents the bonded interactions. Individual interactions can be accessed using
-    NonBondedInteractions[i], where i is the bond id. Will return a bonded interaction 
+    BondedInteractions[i], where i is the bond id. Will return a bonded interaction
     from bonded_interaction_classes"""
 
     def __getitem__(self, key):
@@ -1569,6 +1575,9 @@ class BondedInteractions(object):
         # Set the parameters of the BondedInteraction instance in the Es core
         value._set_params_in_es_core()
 
+    def __len__(self):
+        return n_bonded_ia
+
     # Support iteration over active bonded interactions
     def __iter__(self):
         for i in range(n_bonded_ia):
@@ -1581,7 +1590,7 @@ class BondedInteractions(object):
 
     def __getstate__(self):
         params = {}
-        for i,bonded_instance in enumerate(self):
+        for i, bonded_instance in enumerate(self):
             if hasattr(bonded_instance, 'params'):
                 params[i] = bonded_instance.params
                 params[i]['bond_type'] = bonded_instance.type_number()
@@ -1591,7 +1600,7 @@ class BondedInteractions(object):
 
     def __setstate__(self, params):
         for i in params:
-            if params[i] != None:
+            if params[i] is not None:
                 bond_type = params[i]['bond_type']
                 del params[i]['bond_type']
                 self[i] = bonded_interaction_classes[bond_type](**params[i])
