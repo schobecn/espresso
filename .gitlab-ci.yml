@@ -4,9 +4,16 @@ stages:
   - build
   - deploy
 
-build_and_test:
+shanchen:
   stage: build
   script:
+    - export myconfig=shanchen
+    - bash maintainer/cuda_build.sh
+
+maxset:
+  stage: build
+  script:
+    - export myconfig=maxset
     - bash maintainer/cuda_build.sh
   artifacts:
     paths:
