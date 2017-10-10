@@ -1774,12 +1774,6 @@ cdef class ParticleList(object):
         See Also
         ----------
         add
-<<<<<<< HEAD
-        remove, delete
-=======
-        remove
-        
->>>>>>> 923cefe
 
         """
         remove_all_particles()
