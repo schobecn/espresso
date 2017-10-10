@@ -1267,17 +1267,28 @@ IF BOND_VIRTUAL == 1:
             return "VIRTUAL"
 
         def valid_keys(self):
-            return
+# <<<<<<< HEAD
+#             return
                       
+#         def required_keys(self):
+#             t = ()
+#             return t
+
+#         def set_default_params(self):
+#             pass
+        
+# =======
+            return {}
+
         def required_keys(self):
-            t = ()
-            return t
+            return []
 
         def set_default_params(self):
-            pass
-        
+            self._params = {}
+
+# >>>>>>> b3fbf45
         def _get_params_from_es_core(self):
-            pass
+            return {}
 
         def _set_params_in_es_core(self):
             virtual_set_params(self._bond_id)
