@@ -19,8 +19,8 @@ using namespace ScriptInterface;
 struct TestClass : public ScriptInterfaceBase {
   TestClass() {
     constructed = true;
-    last_instance = this;
   }
+  
   ~TestClass() { destructed = true; }
 
   void set_parameter(const std::string &name, const Variant &value) override {
@@ -46,10 +46,8 @@ struct TestClass : public ScriptInterfaceBase {
     return std::string("TestResult");
   }
 
-  std::pair<std::string, VariantMap> last_method_parameters;
-
-  std::pair<std::string, Variant> last_parameter;
-  static TestClass *last_instance;
+  static std::pair<std::string, VariantMap> last_method_parameters;
+  static std::pair<std::string, Variant> last_parameter;
 
   std::shared_ptr<ScriptInterfaceBase> obj_param;
 
@@ -60,7 +58,9 @@ struct TestClass : public ScriptInterfaceBase {
 
 bool TestClass::constructed = false;
 bool TestClass::destructed = false;
-TestClass *TestClass::last_instance = nullptr;
+std::pair<std::string, VariantMap> TestClass::last_method_parameters;
+std::pair<std::string, Variant> TestClass::last_parameter;
+
 
 /**
  * Check that instances are created and correctly destroyed on
@@ -91,8 +91,6 @@ BOOST_AUTO_TEST_CASE(ctor_dtor) {
  * Check that parameters are forwarded correctly.
  */
 BOOST_AUTO_TEST_CASE(set_parameter) {
-  TestClass::last_instance = nullptr;
-
   if (callbacks->comm().rank() == 0) {
     auto so = std::make_shared<ParallelScriptInterface>("TestClass");
 
@@ -103,9 +101,7 @@ BOOST_AUTO_TEST_CASE(set_parameter) {
     callbacks->loop();
   }
 
-  BOOST_REQUIRE(TestClass::last_instance != nullptr);
-
-  auto const &last_parameter = TestClass::last_instance->last_parameter;
+  auto const &last_parameter = TestClass::last_parameter;
   BOOST_CHECK(last_parameter.first == "TestParam");
   BOOST_CHECK(boost::get<std::string>(last_parameter.second) == "TestValue");
 }
@@ -119,9 +115,6 @@ BOOST_AUTO_TEST_CASE(call_method) {
   const VariantMap params{{"TestParam", std::string("TestValue")}};
   const std::string method{"TestMethod"};
 
-  /* Reset */
-  TestClass::last_instance = nullptr;
-
   if (callbacks->comm().rank() == 0) {
     auto so = std::make_shared<ParallelScriptInterface>("TestClass");
 
@@ -131,20 +124,14 @@ BOOST_AUTO_TEST_CASE(call_method) {
     BOOST_CHECK(boost::get<std::string>(result) == "TestResult");
 
     callbacks->abort_loop();
-    BOOST_CHECK(TestClass::last_instance != nullptr);
-
-    auto const &last_parameters =
-        TestClass::last_instance->last_method_parameters;
-    BOOST_CHECK(last_parameters.first == method);
-    BOOST_CHECK(last_parameters.second == params);
   } else {
     callbacks->loop();
-    BOOST_CHECK(TestClass::last_instance != nullptr);
-    auto const &last_parameters =
-        TestClass::last_instance->last_method_parameters;
-    BOOST_CHECK(last_parameters.first == method);
-    BOOST_CHECK(last_parameters.second == params);
   }
+
+  auto const &last_parameters =
+    TestClass::last_method_parameters;
+  BOOST_CHECK(last_parameters.first == method);
+  BOOST_CHECK(last_parameters.second == params);
 }
 
 BOOST_AUTO_TEST_CASE(parameter_lifetime) {
