@@ -151,7 +151,8 @@ class openGLLive(object):
                 self.updateParticles()
                 self.updateChargeColorRange()
                 self.updateBonds()
-                self.updateConstraints()
+                IF CONSTRAINTS:
+                    self.updateConstraints()
                 self.hasParticleData = True
 
             # IF CALLED TOO OFTEN, ONLY UPDATE WITH GIVEN FREQ
@@ -312,8 +313,9 @@ class openGLLive(object):
         if self.specs['draw_bonds']:
             self.drawBonds()
 
-        if self.specs['draw_constraints']:
-            self.drawConstraints()
+        IF CONSTRAINTS:
+            if self.specs['draw_constraints']:
+                self.drawConstraints()
 
     def drawSystemBox(self):
         drawBox([0, 0, 0], self.system.box_l, self.invBackgroundCol)
@@ -811,7 +813,7 @@ class openGLLive(object):
 
         glEnable(GL_BLEND)
 
-        glEnable(GL_CULL_FACE)
+        #glEnable(GL_CULL_FACE)
 
         glLineWidth(2.0)
         glutIgnoreKeyRepeat(1)
