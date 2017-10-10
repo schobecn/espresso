@@ -321,7 +321,6 @@ cdef class System(object):
 
            Parameters:
            -----------
-
            d_new : float
                    new box length
            dir : str, optional
