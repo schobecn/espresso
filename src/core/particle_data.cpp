@@ -1062,9 +1062,10 @@ void local_rescale_particles(int dir, double scale) {
 void added_particle(int part) {
   int i;
 
-  n_part++;
+  // n_part++;
 
   if (part > max_seen_particle) {
+    n_part++;
     realloc_local_particles(part);
 
     max_seen_particle = part;

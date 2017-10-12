@@ -459,7 +459,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid, const double* con
   (local_particles[current_vs_pid])->p.isVirtual=1;
   (local_particles[relate_to])->p.rotation=ROTATION_X | ROTATION_Y | ROTATION_Z;
   (local_particles[current_vs_pid])->p.type=collision_params.vs_particle_type;
-  on_particle_change();
+  //on_particle_change();
 }
 
 
@@ -730,18 +730,18 @@ void handle_collisions ()
     int new_highest_pid;
     MPI_Reduce(&vs_to_be_created, &new_highest_pid,1,MPI_INT, MPI_SUM,0,comm_cart);
     new_highest_pid-=1;
-    printf("node: %d, new_highest_pid: %d\n",this_node, new_highest_pid);
+    //printf("node: %d, new_highest_pid: %d\n",this_node, new_highest_pid);
     
     // On the head node, call added_particle, before any particles are created
     if (this_node==0) {
-      for (int i=max_seen_particle+1;i<=new_highest_pid-max_seen_particle-1;i++) {
+      for (int i=max_seen_particle+1;i<=new_highest_pid;i++) {
 	added_particle(i);
-	printf("added_particle(%d)\n",i);
+	// printf("added_particle(%d)\n",i);
       }
     }
     
     
-    printf("Node: %d, vs_to_be_created: %d, first_local_pid_to_use: %d\n",this_node, vs_to_be_created,first_local_pid_to_use);
+    // printf("Node: %d, vs_to_be_created: %d, first_local_pid_to_use: %d\n",this_node, vs_to_be_created,first_local_pid_to_use);
     
     
     int current_vs_pid=first_local_pid_to_use;
@@ -824,11 +824,14 @@ void handle_collisions ()
     // NOTE!! this has to be changed to total_collisions, once parallelization
     // is implemented
 
-    if (number_of_collisions >0)
+    int total_collisions;
+    MPI_Allreduce(&number_of_collisions, &total_collisions, 1, MPI_INT, MPI_SUM, comm_cart);
+    
+    if (total_collisions >0)
     {
       on_particle_change();
+      announce_resort_particles();
     }
-    announce_resort_particles();
 
   }
   
