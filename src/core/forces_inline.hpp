@@ -277,7 +277,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 /***********************************************/
 
 #ifdef COLLISION_DETECTION
-  if (collision_params.mode != COLLISION_MODE_OFF)
+  if (collision_params.mode != COLLISION_MODE_OFF) 
     detect_collision(p1, p2, dist);
 #endif
 
