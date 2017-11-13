@@ -39,7 +39,7 @@ namespace ScriptInterface {
 		      {"three_particle_binding_angle_resolution",collision_params.three_particle_angle_resolution},
 		      
 			{"distance",collision_params.distance},
-			  {"distance_glued_particle_to_vs",collision_params.dist_glued_part_to_vs},
+			  {"distance_glued_part_to_vs",collision_params.dist_glued_part_to_vs},
 			    {"vs_placement", collision_params.vs_placement},
 			      {"part_type_vs",collision_params.vs_particle_type},
 				{"part_type_to_be_glued",collision_params.part_type_to_be_glued},

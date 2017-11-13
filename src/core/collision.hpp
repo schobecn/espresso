@@ -88,7 +88,7 @@ extern Collision_parameters collision_params;
     a bond between the particles is added as marker and the collision is
     recorded in the queue for later processing.
 */
-// void detect_collision(const Particle* p1, const Particle* p2, const double& dist_betw_part);
+void detect_collision(const Particle* p1, const Particle* p2, const double& dist_betw_part);
 
 void prepare_local_collision_queue();
 
@@ -114,8 +114,7 @@ inline bool glue_to_surface_criterion(const Particle* const p1, const Particle* 
 /** @brief Detect (and queue) a collision between the given particles. */
 inline void detect_collision(const Particle* const p1, const Particle* const p2, const double& dist_betw_part)
 {
-  // if (dist_betw_part > collision_params.distance)
-  if (dist_betw_part > get_ia_param(p1->p.type,p2->p.type)->Hertzian_sig)
+  if (dist_betw_part > collision_params.distance)
     return;
   
     // If we are in the glue to surface mode, check that the particles
@@ -151,26 +150,6 @@ inline void detect_collision(const Particle* const p1, const Particle* const p2,
     return;
   }
   queue_collision(p1->p.identity,p2->p.identity);
-
-  // // conserve momentum when particles collide
-  // // but here is read-only
-  // for (int i=0;i<3;i++) {
-  //   p1->m.v[i] = (p1->p.mass * p1->m.v[i] + p2->p.mass * p2->m.v[i]) / (p1->p.mass + p2->p.mass);
-  //   p2->m.v[i] = p1->m.v[i];
-  //   printf("blubb\n");
-  // }
-
-  // // for particles which are fixed
-  // // ToDo: abhaengig von flag (fix) statt particle type
-  // if (p1->p.ext_flag != 0 || p2->p.ext_flag != 0) {
-  //   p1->m.v[0] = 0;
-  //   p2->m.v[0] = 0;
-  //   p1->m.v[1] = 0;
-  //   p2->m.v[1] = 0;
-  //   p1->m.v[2] = 0;
-  //   p2->m.v[2] = 0;
-  // }
-  
 }
 
 #endif
