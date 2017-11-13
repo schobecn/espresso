@@ -90,13 +90,27 @@ extern Collision_parameters collision_params;
 */
 void detect_collision(const Particle* p1, const Particle* p2, const double& dist_betw_part);
 
-void prepare_collision_queue();
+void prepare_local_collision_queue();
 
 /// Handle the collisions recorded in the queue
 void handle_collisions();
 
 /** @brief Validates collision parameters and creates particle types if needed */
 bool validate_collision_parameters();
+
+/** @brief add the collision between the given particle ids to the collision queue */
+void queue_collision(const int part1,const int part2);
+
+/** @brief Check additional criteria for the glue_to_surface collision mode */
+inline bool glue_to_surface_criterion(const Particle* const p1, const Particle* const p2) {
+  return  (
+	   ((p1->p.type==collision_params.part_type_to_be_glued)
+	    && (p2->p.type ==collision_params.part_type_to_attach_vs_to))
+	   ||
+	   ((p2->p.type==collision_params.part_type_to_be_glued)
+	    && (p1->p.type ==collision_params.part_type_to_attach_vs_to)));
+}
+
 #endif
 
 #endif
