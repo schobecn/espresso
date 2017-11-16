@@ -688,6 +688,14 @@ void handle_collisions ()
 	  // Enable rotation on the particles to which vs will be attached
 	  p1->p.rotation=ROTATION_X | ROTATION_Y | ROTATION_Z;
 	  p2->p.rotation=ROTATION_X | ROTATION_Y | ROTATION_Z;
+
+	  // conserve momentum when particles collide
+	  // but here is read-only
+	  for (int i=0;i<3;i++) {
+	    p1->m.v[i] = (p1->p.mass * p1->m.v[i] + p2->p.mass * p2->m.v[i]) / (p1->p.mass + p2->p.mass);
+	    p2->m.v[i] = p1->m.v[i];
+	    //printf("blubb\n");
+	  }
 	  
 	  // The vs placement is done by the node on which p1 is non-ghost
 	  if (! p1->l.ghost) {
