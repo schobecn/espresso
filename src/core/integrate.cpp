@@ -493,7 +493,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     if (check_runtime_errors())
       break;
 #endif
-
+    
 // progagate one-step functionalities
 #ifdef LB
     if (lattice_switch & LATTICE_LB)
@@ -562,11 +562,12 @@ void integrate_vv(int n_steps, int reuse_forces) {
       /* Propagate time: t = t+dt */
       sim_time += time_step;
     }
+
 #ifdef COLLISION_DETECTION
     handle_collisions();
 #endif
   }
-
+  
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_STOP_INSTRUMENTATION;
 #endif

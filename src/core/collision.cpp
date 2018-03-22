@@ -606,13 +606,12 @@ void three_particle_binding_domain_decomposition(const std::vector<collision_str
 // Handle the collisions stored in the queue
 void handle_collisions ()
 {
-
   if (collision_params.exception_on_collision) {
     for (auto& c : local_collision_queue) {
       runtimeWarningMsg() << "Collision between particles "<<std::min(c.pp1,c.pp2) <<" and "<<std::max(c.pp1,c.pp2);
     }  
   }
-    
+  
   if (bind_centers()) 
   {
     for (auto& c : local_collision_queue) {
@@ -630,7 +629,7 @@ void handle_collisions ()
   // Virtual sites based collisions schemese 
 #ifdef VIRTUAL_SITES_RELATIVE
   if ((collision_params.mode & COLLISION_MODE_VS) || (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
-
+    
     // Gather the global collision queue, because only one node hsa a collision across node boundaries in its cueue.
     // The other node might still have to change particle properties on its non-ghost particle
     auto gathered_queue = gather_global_collision_queue();
@@ -642,19 +641,18 @@ void handle_collisions ()
     
     // Make sure, the local_particles array is long enough
     realloc_local_particles(max_seen_particle);
-    
-    
-    
+        
     int current_vs_pid=max_seen_particle+1;
-    
+
     // Iterate over global collision queue
     for (auto& c: gathered_queue) {
-      
       // Get particle pointers
       Particle* const p1=local_particles[c.pp1];
       Particle* const p2=local_particles[c.pp2];
-    
-      // If we have none of the two partic;es, only increase the counter for the next id to use
+      // printf("node %d: p1 %p, p2 %p \n", this_node, p1, p2);
+      // printf("max_seen_particle: %d \n", max_seen_particle);
+
+      // If we have none of the two particles, only increase the counter for the next id to use
       if (p1==NULL and p2==NULL) {
 	if (collision_params.mode & COLLISION_MODE_VS)
 	  {
@@ -664,31 +662,45 @@ void handle_collisions ()
 	  }
 	// For glue to surface, we have only one vs
 	added_particle(current_vs_pid);
-	current_vs_pid++;
-    
+	current_vs_pid++;    
       }
       else
 	{ // We have at least one
 
-      // Calculate initial position for new vs, which is in the local node's domain
-      // Vs is moved afterwards and resorted after all collision s are handled
-      // Use position of non-ghost colliding particle.
-      
+	  // Calculate initial position for new vs, which is in the local node's domain
+	  // Vs is moved afterwards and resorted after all collision s are handled
+	  // Use position of non-ghost colliding particle.
+	  
       double initial_pos[3];
-      if (p1->l.ghost)
+
+      // distinguish between 1 or 2 particles on one node??
+      // more than 34 particles found, 2 are probably on one node and ghost layer of neighboring node
+      if (p1 != NULL and p2 != NULL) {
+	if (p1->l.ghost) {
+	  memmove(initial_pos,p2->r.p,3*sizeof(double));
+	}
+	else {
+	  memmove(initial_pos,p1->r.p,3*sizeof(double));
+	}
+      }
+      if (p1 == NULL) {
 	memmove(initial_pos,p2->r.p,3*sizeof(double));
-      else
+      }
+      if (p2 == NULL) {
 	memmove(initial_pos,p1->r.p,3*sizeof(double));
-      
-	// If we are in the two vs mode
-	// Virtual site related to first particle in the collision
-	if (collision_params.mode & COLLISION_MODE_VS)
-	{
-	  double pos1[3],pos2[3];
+      }
+      // printf("node %d: p1 %p, p2 %p \n", this_node, p1, p2); 
+      // nodes with only one particle got lost at this point (with if query, all nodes are kept)
+
+      // If we are in the two vs mode
+      // Virtual site related to first particle in the collision
+      if (collision_params.mode & COLLISION_MODE_VS) {
+	double pos1[3],pos2[3];
+	if (p1 != NULL and p2 != NULL) {
 	  // Enable rotation on the particles to which vs will be attached
 	  p1->p.rotation=ROTATION_X | ROTATION_Y | ROTATION_Z;
 	  p2->p.rotation=ROTATION_X | ROTATION_Y | ROTATION_Z;
-
+	  
 	  // conserve momentum when particles collide
 	  // but here is read-only
 	  for (int i=0;i<3;i++) {
@@ -696,7 +708,9 @@ void handle_collisions ()
 	    p2->m.v[i] = p1->m.v[i];
 	    //printf("blubb\n");
 	  }
-	  
+	}
+
+	if (p1 != NULL and p2 != NULL) {      
 	  // The vs placement is done by the node on which p1 is non-ghost
 	  if (! p1->l.ghost) {
 	    bind_at_point_of_collision_calc_vs_pos(p1,p2,pos1,pos2);
@@ -715,36 +729,38 @@ void handle_collisions ()
 	      current_vs_pid++;
 	    }
 	}
+      }
+      // printf("node %d: 2 \n", this_node);  
 
-	if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
-	  double pos[3];
-	  const int pid=glue_to_surface_calc_vs_pos(p1,p2,pos);
-
-	  // Change type of partilce being attached, to make it inert
-	  if (p1->p.type==collision_params.part_type_to_be_glued) {
-	    p1->p.type=collision_params.part_type_after_glueing;
-	  }
-	  if (p2->p.type==collision_params.part_type_to_be_glued) {
-	    p2->p.type=collision_params.part_type_after_glueing;
-	  }
-	  
-	  // Vs placement happens on the node that has p1
-	  if (!p1->l.ghost) {
-	    place_vs_and_relate_to_particle(current_vs_pid,pos,pid,initial_pos);
+      if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
+	double pos[3];
+	const int pid=glue_to_surface_calc_vs_pos(p1,p2,pos);
+	
+	// Change type of partilce being attached, to make it inert
+	if (p1->p.type==collision_params.part_type_to_be_glued) {
+	  p1->p.type=collision_params.part_type_after_glueing;
+	}
+	if (p2->p.type==collision_params.part_type_to_be_glued) {
+	  p2->p.type=collision_params.part_type_after_glueing;
+	}
+	
+	// Vs placement happens on the node that has p1
+	if (!p1->l.ghost) {
+	  place_vs_and_relate_to_particle(current_vs_pid,pos,pid,initial_pos);
+	  current_vs_pid++;
+	}
+	else
+	  { // Just update the books
+	    added_particle(current_vs_pid);
 	    current_vs_pid++;
 	  }
-	  else
-	    { // Just update the books
-	      added_particle(current_vs_pid);
-	      current_vs_pid++;
-	    }
-	  glue_to_surface_bind_part_to_vs(p1,p2,current_vs_pid,c);
-	}
+	glue_to_surface_bind_part_to_vs(p1,p2,current_vs_pid,c);
+      }
 	} // Loop over all collisions in the queue
       
       // If any node had a collision, all nodes need to do on_particle_change
       // and resort
-      
+
       if (gathered_queue.size()>0) {
 	on_particle_change();
 	announce_resort_particles();
@@ -752,27 +768,23 @@ void handle_collisions ()
     } // total_collision>0
   } // are we in one of the vs_based methods
 #endif //defined VIRTUAL_SITES_RELATIVE
-  
 
   // three-particle-binding part
 
-
   if (collision_params.mode & (COLLISION_MODE_BIND_THREE_PARTICLES)) {
-  auto gathered_queue = gather_global_collision_queue();
+    auto gathered_queue = gather_global_collision_queue();
 
-
-      // If we don't have domain decomposition, we need to do a full sweep over all
-      // particles in the system. (slow)
-      if (cell_structure.type!=CELL_STRUCTURE_DOMDEC) {
-        three_particle_binding_full_search(gathered_queue);
+    // If we don't have domain decomposition, we need to do a full sweep over all
+    // particles in the system. (slow)
+    if (cell_structure.type!=CELL_STRUCTURE_DOMDEC) {
+      three_particle_binding_full_search(gathered_queue);
     } // if cell structure != domain decomposition
     else
-    {
-      three_particle_binding_domain_decomposition(gathered_queue);
-    } // If we have doamin decomposition
-
+      {
+	three_particle_binding_domain_decomposition(gathered_queue);
+      } // If we have doamin decomposition
+    
   } // if TPB
-
   local_collision_queue.clear();
 }
 
