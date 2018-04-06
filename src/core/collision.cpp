@@ -199,7 +199,6 @@ void queue_collision(const int part1,const int part2) {
 // Add it to the queue in case virtual sites should be added at the point of collision
 void detect_collision(const Particle* p1, const Particle* p2, const double& dist_betw_part)
 {
-
   if (dist_betw_part > get_ia_param(p1->p.type,p2->p.type)->Hertzian_sig)
     return;
 
@@ -218,11 +217,10 @@ void detect_collision(const Particle* p1, const Particle* p2, const double& dist
 
   // Check, if there's already a bond between the particles
   if (bond_exists(p1,p2, collision_params.bond_centers))
-    return;
+      return;
   
   if (bond_exists(p2,p1, collision_params.bond_centers))
     return;
-
 
   /* If we're still here, there is no previous bond between the particles,
      we have a new collision */
@@ -232,6 +230,27 @@ void detect_collision(const Particle* p1, const Particle* p2, const double& dist
     return;
   }
   queue_collision(p1->p.identity,p2->p.identity);
+
+  // if (p1->p.ext_flag != 0 || p2->p.ext_flag != 0) {
+  //   p1->m.v[0] = 0;
+  //   p2->m.v[0] = 0;
+  //   p1->m.v[1] = 0;
+  //   p2->m.v[1] = 0;
+  //   p1->m.v[2] = 0;
+  //   p2->m.v[2] = 0;
+  // }
+
+
+  // conserve momentum when particles collide  
+
+  // p1->m.v[0] = (p1->p.mass * p1->m.v[0] + p2->p.mass * p2->m.v[0]) / (p1->p.mass + p2->p.mass);
+  // p2->m.v[0] = p1->m.v[0];
+  // p1->m.v[1] = (p1->p.mass * p1->m.v[1] + p2->p.mass * p2->m.v[1]) / (p1->p.mass + p2->p.mass);
+  // p2->m.v[1] = p1->m.v[1];
+  // p1->m.v[2] = (p1->p.mass * p1->m.v[2] + p2->p.mass * p2->m.v[2]) / (p1->p.mass + p2->p.mass);
+  // p2->m.v[2] = p1->m.v[2];
+
+
 }
 
 
