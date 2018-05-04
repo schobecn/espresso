@@ -293,6 +293,11 @@ void bind_at_point_of_collision_calc_vs_pos(const Particle* const p1, const Part
     pos1[i] = p1->r.p[i] - vec21[i] * collision_params.vs_placement;
     pos2[i] = p1->r.p[i] - vec21[i] * (1.-collision_params.vs_placement);
   }
+  // print bonding particles
+  // we need particle ID, particleCharge, particleType (which corresponds to particleSize)
+  printf("p1 type %d, p1 identity %d, p1 charge %f \n", p1->p.type, p1->p.identity, p1->p.q); 
+  printf("p2 type %d, p2 identity %d, p2 charge %f \n", p2->p.type, p2->p.identity, p2->p.q); 
+
 }
 
 // Considers three particles for three_particle_binding and performs

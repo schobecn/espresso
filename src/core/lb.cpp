@@ -2169,45 +2169,45 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index,
     double rho_times_coeff;
     double tmp1,tmp2;
 
-    /* update the q=0 sublattice */
-    lbfluid[0][0][index] = 1./3. * (local_rho-avg_rho) - 1./2. * trace;
+    // /* update the q=0 sublattice */
+    // lbfluid[0][0][index] = 1./3. * (local_rho-avg_rho) - 1./2. * trace;
 
-    /* update the q=1 sublattice */
-    rho_times_coeff = 1./18. * (local_rho-avg_rho);
+    // /* update the q=1 sublattice */
+    // rho_times_coeff = 1./18. * (local_rho-avg_rho);
 
-    lbfluid[0][1][index] = rho_times_coeff + 1./6.*local_j[0] + 1./4. * local_pi[0] - 1./12.*trace;
-    lbfluid[0][2][index] = rho_times_coeff - 1./6.*local_j[0] + 1./4. * local_pi[0] - 1./12.*trace;
-    lbfluid[0][3][index] = rho_times_coeff + 1./6.*local_j[1] + 1./4. * local_pi[2] - 1./12.*trace;
-    lbfluid[0][4][index] = rho_times_coeff - 1./6.*local_j[1] + 1./4. * local_pi[2] - 1./12.*trace;
-    lbfluid[0][5][index] = rho_times_coeff + 1./6.*local_j[2] + 1./4. * local_pi[5] - 1./12.*trace;
-    lbfluid[0][6][index] = rho_times_coeff - 1./6.*local_j[2] + 1./4. * local_pi[5] - 1./12.*trace;
+    // lbfluid[0][1][index] = rho_times_coeff + 1./6.*local_j[0] + 1./4. * local_pi[0] - 1./12.*trace;
+    // lbfluid[0][2][index] = rho_times_coeff - 1./6.*local_j[0] + 1./4. * local_pi[0] - 1./12.*trace;
+    // lbfluid[0][3][index] = rho_times_coeff + 1./6.*local_j[1] + 1./4. * local_pi[2] - 1./12.*trace;
+    // lbfluid[0][4][index] = rho_times_coeff - 1./6.*local_j[1] + 1./4. * local_pi[2] - 1./12.*trace;
+    // lbfluid[0][5][index] = rho_times_coeff + 1./6.*local_j[2] + 1./4. * local_pi[5] - 1./12.*trace;
+    // lbfluid[0][6][index] = rho_times_coeff - 1./6.*local_j[2] + 1./4. * local_pi[5] - 1./12.*trace;
 
-    /* update the q=2 sublattice */
-    rho_times_coeff = 1./36. * (local_rho-avg_rho);
+    // /* update the q=2 sublattice */
+    // rho_times_coeff = 1./36. * (local_rho-avg_rho);
 
-    tmp1 = local_pi[0] + local_pi[2];
-    tmp2 = 2.0*local_pi[1];
+    // tmp1 = local_pi[0] + local_pi[2];
+    // tmp2 = 2.0*local_pi[1];
 
-    lbfluid[0][7][index]  = rho_times_coeff + 1./12.*(local_j[0]+local_j[1]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
-    lbfluid[0][8][index]  = rho_times_coeff - 1./12.*(local_j[0]+local_j[1]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
-    lbfluid[0][9][index]  = rho_times_coeff + 1./12.*(local_j[0]-local_j[1]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
-    lbfluid[0][10][index] = rho_times_coeff - 1./12.*(local_j[0]-local_j[1]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
+    // lbfluid[0][7][index]  = rho_times_coeff + 1./12.*(local_j[0]+local_j[1]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
+    // lbfluid[0][8][index]  = rho_times_coeff - 1./12.*(local_j[0]+local_j[1]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
+    // lbfluid[0][9][index]  = rho_times_coeff + 1./12.*(local_j[0]-local_j[1]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
+    // lbfluid[0][10][index] = rho_times_coeff - 1./12.*(local_j[0]-local_j[1]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
 
-    tmp1 = local_pi[0] + local_pi[5];
-    tmp2 = 2.0*local_pi[3];
+    // tmp1 = local_pi[0] + local_pi[5];
+    // tmp2 = 2.0*local_pi[3];
 
-    lbfluid[0][11][index] = rho_times_coeff + 1./12.*(local_j[0]+local_j[2]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
-    lbfluid[0][12][index] = rho_times_coeff - 1./12.*(local_j[0]+local_j[2]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
-    lbfluid[0][13][index] = rho_times_coeff + 1./12.*(local_j[0]-local_j[2]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
-    lbfluid[0][14][index] = rho_times_coeff - 1./12.*(local_j[0]-local_j[2]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
+    // lbfluid[0][11][index] = rho_times_coeff + 1./12.*(local_j[0]+local_j[2]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
+    // lbfluid[0][12][index] = rho_times_coeff - 1./12.*(local_j[0]+local_j[2]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
+    // lbfluid[0][13][index] = rho_times_coeff + 1./12.*(local_j[0]-local_j[2]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
+    // lbfluid[0][14][index] = rho_times_coeff - 1./12.*(local_j[0]-local_j[2]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
 
-    tmp1 = local_pi[2] + local_pi[5];
-    tmp2 = 2.0*local_pi[4];
+    // tmp1 = local_pi[2] + local_pi[5];
+    // tmp2 = 2.0*local_pi[4];
 
-    lbfluid[0][15][index] = rho_times_coeff + 1./12.*(local_j[1]+local_j[2]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
-    lbfluid[0][16][index] = rho_times_coeff - 1./12.*(local_j[1]+local_j[2]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
-    lbfluid[0][17][index] = rho_times_coeff + 1./12.*(local_j[1]-local_j[2]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
-    lbfluid[0][18][index] = rho_times_coeff - 1./12.*(local_j[1]-local_j[2]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
+    // lbfluid[0][15][index] = rho_times_coeff + 1./12.*(local_j[1]+local_j[2]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
+    // lbfluid[0][16][index] = rho_times_coeff - 1./12.*(local_j[1]+local_j[2]) + 1./8.*(tmp1+tmp2) - 1./24.*trace;
+    // lbfluid[0][17][index] = rho_times_coeff + 1./12.*(local_j[1]-local_j[2]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
+    // lbfluid[0][18][index] = rho_times_coeff - 1./12.*(local_j[1]-local_j[2]) + 1./8.*(tmp1-tmp2) - 1./24.*trace;
 
     // // lbfluid[0][i][index] = lbmodel.coeff[i % 19][0] * lbpar.rho - pop[i]
     // // reverse engineering aus lb_get_populations
@@ -2421,26 +2421,26 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index,
     // lbfluid[0][17][index] = -(lbmodel.coeff[17 % 19][0] * lbpar.rho - 1.8890022070881565e-07);
     // lbfluid[0][18][index] = -(lbmodel.coeff[18 % 19][0] * lbpar.rho - 1.8887755404214900e-07);
 
-    // // for agrid=2.0
-    // lbfluid[0][0][index] = -(lbmodel.coeff[0 % 19][0] * lbpar.rho - 2.2666666430654384e-06);
-    // lbfluid[0][1][index] = -(lbmodel.coeff[1 % 19][0] * lbpar.rho - 3.7777777384425638e-07);
-    // lbfluid[0][2][index] = -(lbmodel.coeff[2 % 19][0] * lbpar.rho - 3.7777777384425638e-07);
-    // lbfluid[0][3][index] = -(lbmodel.coeff[3 % 19][0] * lbpar.rho - 3.7777777384425638e-07);
-    // lbfluid[0][4][index] = -(lbmodel.coeff[4 % 19][0] * lbpar.rho - 3.7777777384425638e-07);
-    // lbfluid[0][5][index] = -(lbmodel.coeff[5 % 19][0] * lbpar.rho - 3.7768710853763974e-07);
-    // lbfluid[0][6][index] = -(lbmodel.coeff[6 % 19][0] * lbpar.rho - 3.7786844187097295e-07);
-    // lbfluid[0][7][index] = -(lbmodel.coeff[7 % 19][0] * lbpar.rho - 1.8888888692213650e-07);
-    // lbfluid[0][8][index] = -(lbmodel.coeff[8 % 19][0] * lbpar.rho - 1.8888888692213650e-07);
-    // lbfluid[0][9][index] = -(lbmodel.coeff[9 % 19][0] * lbpar.rho - 1.8888888692213650e-07);
-    // lbfluid[0][10][index] = -(lbmodel.coeff[10 % 19][0] * lbpar.rho - 1.8888888692213650e-07);
-    // lbfluid[0][11][index] = -(lbmodel.coeff[11 % 19][0] * lbpar.rho - 1.8884355426882821e-07);
-    // lbfluid[0][12][index] = -(lbmodel.coeff[12 % 19][0] * lbpar.rho - 1.8893422093549481e-07);
-    // lbfluid[0][13][index] = -(lbmodel.coeff[13 % 19][0] * lbpar.rho - 1.8893422093549481e-07);
-    // lbfluid[0][14][index] = -(lbmodel.coeff[14 % 19][0] * lbpar.rho - 1.8884355426882821e-07);
-    // lbfluid[0][15][index] = -(lbmodel.coeff[15 % 19][0] * lbpar.rho - 1.8884355426882821e-07);
-    // lbfluid[0][16][index] = -(lbmodel.coeff[16 % 19][0] * lbpar.rho - 1.8893422093549481e-07);
-    // lbfluid[0][17][index] = -(lbmodel.coeff[17 % 19][0] * lbpar.rho - 1.8893422093549481e-07);
-    // lbfluid[0][18][index] = -(lbmodel.coeff[18 % 19][0] * lbpar.rho - 1.8884355426882821e-07);
+    // for agrid=2.0
+    lbfluid[0][0][index] = -(lbmodel.coeff[0 % 19][0] * lbpar.rho - 2.2666666430654384e-06);
+    lbfluid[0][1][index] = -(lbmodel.coeff[1 % 19][0] * lbpar.rho - 3.7777777384425638e-07);
+    lbfluid[0][2][index] = -(lbmodel.coeff[2 % 19][0] * lbpar.rho - 3.7777777384425638e-07);
+    lbfluid[0][3][index] = -(lbmodel.coeff[3 % 19][0] * lbpar.rho - 3.7777777384425638e-07);
+    lbfluid[0][4][index] = -(lbmodel.coeff[4 % 19][0] * lbpar.rho - 3.7777777384425638e-07);
+    lbfluid[0][5][index] = -(lbmodel.coeff[5 % 19][0] * lbpar.rho - 3.7768710853763974e-07);
+    lbfluid[0][6][index] = -(lbmodel.coeff[6 % 19][0] * lbpar.rho - 3.7786844187097295e-07);
+    lbfluid[0][7][index] = -(lbmodel.coeff[7 % 19][0] * lbpar.rho - 1.8888888692213650e-07);
+    lbfluid[0][8][index] = -(lbmodel.coeff[8 % 19][0] * lbpar.rho - 1.8888888692213650e-07);
+    lbfluid[0][9][index] = -(lbmodel.coeff[9 % 19][0] * lbpar.rho - 1.8888888692213650e-07);
+    lbfluid[0][10][index] = -(lbmodel.coeff[10 % 19][0] * lbpar.rho - 1.8888888692213650e-07);
+    lbfluid[0][11][index] = -(lbmodel.coeff[11 % 19][0] * lbpar.rho - 1.8884355426882821e-07);
+    lbfluid[0][12][index] = -(lbmodel.coeff[12 % 19][0] * lbpar.rho - 1.8893422093549481e-07);
+    lbfluid[0][13][index] = -(lbmodel.coeff[13 % 19][0] * lbpar.rho - 1.8893422093549481e-07);
+    lbfluid[0][14][index] = -(lbmodel.coeff[14 % 19][0] * lbpar.rho - 1.8884355426882821e-07);
+    lbfluid[0][15][index] = -(lbmodel.coeff[15 % 19][0] * lbpar.rho - 1.8884355426882821e-07);
+    lbfluid[0][16][index] = -(lbmodel.coeff[16 % 19][0] * lbpar.rho - 1.8893422093549481e-07);
+    lbfluid[0][17][index] = -(lbmodel.coeff[17 % 19][0] * lbpar.rho - 1.8893422093549481e-07);
+    lbfluid[0][18][index] = -(lbmodel.coeff[18 % 19][0] * lbpar.rho - 1.8884355426882821e-07);
 
 
 #else // D3Q19
